@@ -1,0 +1,151 @@
+:root{
+  --encre:#1d2b4a;      /* texte, titres */
+  --doux:#5a6782;       /* textes secondaires */
+  --papier:#f3f5f9;     /* fond */
+  --feuille:#ffffff;    /* surfaces */
+  --trait:#d9dfe9;      /* bordures */
+  --debit:#1663a6;      /* colonne débit */
+  --credit:#6b3fa0;     /* colonne crédit */
+  --juste:#13795b;      /* équilibré, actions principales */
+  --juste-clair:#e4f3ec;
+  --erreur:#b42318;
+  --erreur-clair:#fdecea;
+  --attente:#8a5a00;
+  --attente-clair:#fff3d6;
+  --rayon:10px;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--papier);color:var(--encre);font:15px/1.5 "IBM Plex Sans",system-ui,sans-serif;font-variant-numeric:tabular-nums}
+h1{font-size:24px;font-weight:600;margin:0 0 4px}
+h2{font-size:16px;font-weight:600;margin:0 0 12px}
+b{font-weight:600}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:3px solid #8fb4e3;outline-offset:2px}
+.visuel-cache{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+[hidden]{display:none!important}
+
+/* Barre du haut */
+.barre{display:flex;align-items:center;gap:20px;padding:12px 24px;background:var(--feuille);border-bottom:1px solid var(--trait);flex-wrap:wrap}
+.marque{display:flex;flex-direction:column;line-height:1.2;margin-right:auto}
+.marque strong{font-size:18px}
+.marque span{font-size:13px;color:var(--doux)}
+.role{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.role-titre{font-size:13px;color:var(--doux);margin-right:4px}
+.role-choix{color:var(--encre);border:1px solid var(--trait);background:var(--feuille);border-radius:999px;padding:5px 14px;cursor:pointer}
+.role-choix[aria-pressed="true"]{background:var(--encre);border-color:var(--encre);color:#fff}
+.role input{width:120px;padding:5px 10px;border:1px solid var(--trait);border-radius:999px}
+.lien-retours{font-size:14px;color:var(--juste);font-weight:500}
+
+/* Mise en page */
+.page{display:grid;grid-template-columns:240px 1fr;gap:24px;padding:24px;max-width:1360px;margin:0 auto}
+.etapes{display:flex;flex-direction:column;gap:8px;position:sticky;top:16px;align-self:start}
+.etape{color:var(--encre);display:flex;gap:12px;align-items:center;text-align:left;border:1px solid transparent;background:transparent;border-radius:var(--rayon);padding:10px 12px;cursor:pointer}
+.etape small{display:block;color:var(--doux);font-size:13px}
+.etape .num{flex:none;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;border:2px solid var(--trait);font-weight:600;color:var(--doux)}
+.etape.actif{background:var(--feuille);border-color:var(--trait)}
+.etape.actif .num{border-color:var(--encre);background:var(--encre);color:#fff}
+main{min-width:0}
+.intro{color:var(--doux);max-width:72ch;margin:0 0 20px}
+.note{font-size:13px;color:var(--doux);margin:-4px 0 16px}
+
+/* Chaîne du paramétrage : l'ordre de création */
+.chaine{display:flex;flex-wrap:wrap;gap:0;margin-bottom:16px;border:1px solid var(--trait);border-radius:var(--rayon);background:var(--feuille);overflow:hidden}
+.chaine button{color:var(--encre);flex:1 1 auto;border:0;border-right:1px solid var(--trait);background:transparent;padding:10px 12px;cursor:pointer;white-space:nowrap}
+.chaine button:last-child{border-right:0}
+.chaine button em{font-style:normal;font-size:12px;color:var(--doux);margin-left:4px}
+.chaine button.actif{background:var(--encre);color:#fff}
+.chaine button.actif em{color:#c9d3e6}
+.explication{background:var(--feuille);border-left:4px solid var(--encre);padding:12px 16px;border-radius:0 var(--rayon) var(--rayon) 0;margin-bottom:16px;max-width:80ch}
+
+/* Cartes, formulaires */
+.carte{background:var(--feuille);border:1px solid var(--trait);border-radius:var(--rayon);padding:18px}
+.deux-colonnes{display:grid;grid-template-columns:minmax(260px,340px) 1fr;gap:16px;align-items:start}
+.deux-colonnes.large-droite{grid-template-columns:minmax(300px,1fr) minmax(320px,1.2fr)}
+.formulaire{display:flex;flex-direction:column;gap:12px}
+.formulaire.large{margin-bottom:16px}
+label{display:flex;flex-direction:column;gap:4px;font-size:14px;font-weight:500}
+.facultatif{font-weight:400;color:var(--doux);font-size:12px}
+input,select{padding:8px 10px;border:1px solid #c5cedd;border-radius:8px;background:#fff;width:100%}
+input:focus,select:focus{border-color:var(--debit)}
+.grille{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px}
+.case{flex-direction:row;align-items:center;gap:8px;font-weight:400}
+.case input{width:auto}
+.actions{display:flex;gap:10px;flex-wrap:wrap}
+button{border:1px solid var(--juste);background:var(--juste);color:#fff;border-radius:8px;padding:8px 16px;cursor:pointer;font-weight:500}
+button.secondaire{background:#fff;color:var(--encre);border-color:#c5cedd}
+button.supprimer{background:#fff;color:var(--erreur);border-color:#efc2bd;padding:4px 10px;font-size:13px;font-weight:400}
+button.petit{padding:4px 12px;font-size:13px}
+.formulaire > button{align-self:flex-start}
+
+/* Tableaux */
+table{width:100%;border-collapse:collapse}
+th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--trait);vertical-align:middle}
+th{font-size:13px;font-weight:500;color:var(--doux)}
+td.num,th.num{text-align:right;white-space:nowrap}
+#t-ecritures td:first-child{white-space:nowrap;font-weight:500}
+.liste{padding:6px 8px;overflow-x:auto}
+tbody tr.clic{cursor:pointer}
+tbody tr.clic:hover,tbody tr.choisi{background:#eef3fa}
+.vide{padding:20px;color:var(--doux);text-align:center;border:1px dashed var(--trait);border-radius:var(--rayon);background:var(--feuille)}
+.saisie td{padding:6px}
+.saisie select,.saisie input[type=text],.saisie input:not([type]){min-width:120px}
+
+/* Étiquettes de statut */
+.statut{display:inline-block;padding:2px 10px;border-radius:999px;font-size:12px;font-weight:500;background:#eceff4;color:var(--doux)}
+.statut.VALIDEE,.statut.PUBLIEE{background:var(--juste-clair);color:var(--juste)}
+.statut.PROPOSEE,.statut.BROUILLON{background:var(--attente-clair);color:var(--attente)}
+.nature{font-size:13px;color:var(--doux)}
+
+/* Aperçu de recette */
+.apercu{font-size:14px;background:var(--papier);border-radius:8px;padding:10px 12px}
+.apercu ul{margin:6px 0 0;padding-left:18px}
+.apercu .ok{color:var(--juste);font-weight:500}
+.apercu .ko{color:var(--erreur);font-weight:500}
+
+/* La pièce comptable : l'élément central */
+.piece{background:var(--feuille);border:1px solid var(--trait);border-radius:var(--rayon);overflow:hidden;margin-bottom:16px}
+.piece-tete{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:16px 18px;border-bottom:1px solid var(--trait);flex-wrap:wrap}
+.piece-numero{font-size:20px;font-weight:600}
+.piece-numero.brouillon{color:var(--doux);font-weight:500}
+.piece-info{font-size:13px;color:var(--doux);margin-top:2px}
+.piece table th{background:#fafbfd}
+.piece .col-debit{color:var(--debit)}
+.piece .col-credit{color:var(--credit)}
+.piece td.col-debit,.piece td.col-credit{font-weight:500}
+.piece tfoot td{font-weight:600;border-bottom:0}
+.balance{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 18px;border-top:2px solid var(--trait);flex-wrap:wrap}
+.balance.ok{background:var(--juste-clair);color:var(--juste)}
+.balance.ko{background:var(--erreur-clair);color:var(--erreur)}
+.balance strong{font-size:15px}
+.piece-actions{padding:12px 18px;border-top:1px solid var(--trait);display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.piece-actions span{font-size:13px;color:var(--doux)}
+.refus{background:var(--erreur-clair);border:1px solid #f3c7c2;color:var(--erreur);border-radius:var(--rayon);padding:14px 16px;margin-bottom:16px}
+.refus b{display:block;margin-bottom:4px}
+
+/* Messages */
+.message{padding:10px 14px;border-radius:8px;margin-bottom:16px;font-weight:500}
+.message.ok{background:var(--juste-clair);color:var(--juste)}
+.message.ko{background:var(--erreur-clair);color:var(--erreur)}
+
+/* Cartes de recettes publiées */
+.recette{margin-bottom:12px}
+.recette-tete{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px}
+.recette-tete h3{margin:0;font-size:15px}
+.recette .sens-D{color:var(--debit);font-weight:500}
+.recette .sens-C{color:var(--credit);font-weight:500}
+
+@media (max-width:900px){
+  .page{grid-template-columns:1fr;padding:16px}
+  .etapes{position:static;flex-direction:row;overflow-x:auto}
+  .etape{flex:1 0 auto}
+  .etape small{display:none}
+  .deux-colonnes,.deux-colonnes.large-droite{grid-template-columns:1fr}
+  .chaine button{flex:1 1 33%;border-bottom:1px solid var(--trait)}
+}
+@media (max-width:520px){
+  .barre{padding:12px 16px}
+  .role input{width:100px}
+  th,td{padding:7px 6px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}

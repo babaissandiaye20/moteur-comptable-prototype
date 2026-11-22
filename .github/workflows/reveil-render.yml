@@ -1,0 +1,13 @@
+# Garde le back Render éveillé : appelle /api/sante toutes les 10 minutes.
+# Renseigner l'adresse du back dans Settings > Secrets and variables > Actions > Variables : BACK_URL
+name: Réveil du back
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Appeler le point de santé
+        run: curl -fsS --max-time 60 "${{ vars.BACK_URL }}/api/sante" || echo "Le back n'a pas répondu (il se réveille peut-être)"

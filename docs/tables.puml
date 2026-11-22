@@ -1,0 +1,121 @@
+@startuml tables
+!theme plain
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam linetype ortho
+hide circle
+hide methods
+title Moteur comptable : les 12 tables
+
+package "PARAMÉTRAGE · package parametrage · rempli par le comptable" #EEF4FB {
+  entity operation {
+    * code : VARCHAR [PK]
+    libelle : VARCHAR
+    ..traçabilité [shared]..
+    created_by, created_at
+    updated_by, updated_at
+    is_deleted : BOOLEAN
+  }
+  entity journal {
+    * code : VARCHAR [PK]
+    libelle : VARCHAR
+    code_externe : VARCHAR
+    actif : BOOLEAN
+    ..traçabilité + is_deleted..
+  }
+  entity evenement {
+    * code : VARCHAR [PK]
+    libelle : VARCHAR
+    operation_code : VARCHAR [FK]
+    journal_code : VARCHAR [FK]
+    ..traçabilité + is_deleted..
+  }
+  entity rubrique {
+    * code : VARCHAR [PK]
+    libelle : VARCHAR
+    nature : ACTIF / CHARGE / PASSIF / PRODUIT
+    ..traçabilité + is_deleted..
+  }
+  entity compte {
+    * code : VARCHAR [PK]
+    libelle : VARCHAR
+    actif : BOOLEAN
+    ..traçabilité + is_deleted..
+  }
+  entity mapping {
+    * id : BIGINT [PK]
+    rubrique_code : VARCHAR [FK]
+    classe_actif : VARCHAR, * = toutes
+    categorie : VARCHAR, * = toutes
+    compte_code : VARCHAR [FK]
+    ..traçabilité + is_deleted..
+  }
+  entity recette {
+    * id : BIGINT [PK]
+    evenement_code : VARCHAR [FK]
+    version : INT
+    statut : BROUILLON / PUBLIEE / RETIREE
+    date_effet : DATE
+    publie_par, publie_le
+    ..traçabilité..
+  }
+  entity recette_ligne {
+    * id : BIGINT [PK]
+    recette_id : BIGINT [FK]
+    ordre : INT
+    rubrique_code : VARCHAR [FK]
+    sens : D / C
+    montant_source : VARCHAR
+    ignorer_si_zero : BOOLEAN
+  }
+}
+
+package "ÉCRITURES · package ecriture · rempli par le moteur" #E8F3EE {
+  entity evenement_recu {
+    * id : BIGINT [PK]
+    source + event_id : UNIQUE
+    evenement_code : VARCHAR
+    payload : TEXT
+    hash : CHAR [64]
+    recu_le : TIMESTAMP
+  }
+  entity ecriture {
+    * id : BIGINT [PK]
+    evenement_recu_id : BIGINT [FK]
+    evenement_code : VARCHAR
+    recette_id + recette_version
+    journal_code, exercice, numero
+    date_valeur, date_reglement : DATE
+    libelle : VARCHAR
+    statut : PROPOSEE / VALIDEE / ANNULEE
+    created_by, created_at
+    validated_by, validated_at
+  }
+  entity ecriture_ligne {
+    * id : BIGINT [PK]
+    ecriture_id : BIGINT [FK]
+    ordre : INT
+    rubrique_code : VARCHAR
+    compte_code : VARCHAR [recopié]
+    sens : D / C
+    montant : NUMERIC [20,2]
+    devise, reference_titre
+  }
+  entity journal_compteur {
+    * journal_code + exercice [PK]
+    dernier_numero : BIGINT
+  }
+}
+
+operation ||--o{ evenement : "1 opération → n événements"
+journal ||--o{ evenement : "range"
+evenement ||--o{ recette : "versions"
+recette ||--|{ recette_ligne : "lignes"
+recette_ligne }o--|| rubrique
+mapping }o--|| rubrique
+mapping }o--|| compte
+evenement_recu ||--o| ecriture : "1 événement → 1 écriture"
+ecriture }o--|| recette : "version utilisée"
+ecriture ||--|{ ecriture_ligne : "Σ débit = Σ crédit"
+journal ||--o{ journal_compteur : "numérotation"
+@enduml

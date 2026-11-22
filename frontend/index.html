@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Moteur comptable · prototype</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header class="barre">
+  <div class="marque">
+    <strong>Moteur comptable</strong>
+    <span>Prototype de test</span>
+  </div>
+  <div class="role" role="group" aria-label="Agir en tant que">
+    <span class="role-titre">Agir en tant que</span>
+    <button type="button" class="role-choix" data-role="gestionnaire">Gestionnaire</button>
+    <button type="button" class="role-choix" data-role="comptable">Comptable</button>
+    <input id="utilisateur" aria-label="Autre nom d'utilisateur" placeholder="autre nom">
+  </div>
+  <a class="lien-retours" href="retours-financier.xlsx" download>Grille de retours (Excel)</a>
+</header>
+
+<div class="page">
+  <nav class="etapes" aria-label="Étapes">
+    <button class="etape actif" data-etape="parametrage"><span class="num">1</span><span><b>Paramétrer</b><small>Décrire les règles</small></span></button>
+    <button class="etape" data-etape="generer"><span class="num">2</span><span><b>Générer</b><small>Envoyer un événement</small></span></button>
+    <button class="etape" data-etape="ecritures"><span class="num">3</span><span><b>Valider</b><small>Contrôler les écritures</small></span></button>
+  </nav>
+
+  <main>
+    <div id="message" class="message" role="status" aria-live="polite" hidden></div>
+
+    <!-- =================== 1. PARAMÉTRER =================== -->
+    <section id="parametrage" class="panneau">
+      <h1>Paramétrer</h1>
+      <p class="intro">Ici, vous décrivez comment un événement devient une écriture. Les éléments se créent dans cet ordre, car chacun s'appuie sur les précédents.</p>
+
+      <div class="chaine" role="tablist" aria-label="Éléments du paramétrage">
+        <button data-param="operations" class="actif">Opérations <em id="n-operations">0</em></button>
+        <button data-param="journaux">Journaux <em id="n-journaux">0</em></button>
+        <button data-param="evenements">Événements <em id="n-evenements">0</em></button>
+        <button data-param="rubriques">Rubriques <em id="n-rubriques">0</em></button>
+        <button data-param="comptes">Comptes <em id="n-comptes">0</em></button>
+        <button data-param="mappings">Mapping <em id="n-mappings">0</em></button>
+        <button data-param="recettes">Recettes <em id="n-recettes">0</em></button>
+      </div>
+
+      <div class="bloc" data-bloc="operations">
+        <div class="explication"><b>Une opération</b> est une famille d'actions : achat, vente, encaissement. Chaque événement appartient à une seule opération.</div>
+        <div class="deux-colonnes">
+          <form id="f-operations" class="carte formulaire">
+            <h2>Ajouter une opération</h2>
+            <label>Code <input name="code" placeholder="VENTE" required></label>
+            <label>Libellé <input name="libelle" placeholder="Vente de titres"></label>
+            <button>Ajouter l'opération</button>
+          </form>
+          <div class="carte liste"><table><thead><tr><th>Code</th><th>Libellé</th><th>Créée par</th><th><span class="visuel-cache">Actions</span></th></tr></thead><tbody id="t-operations"></tbody></table></div>
+        </div>
+      </div>
+
+      <div class="bloc" data-bloc="journaux" hidden>
+        <div class="explication"><b>Un journal</b> est le classeur qui regroupe les écritures de même nature. Il sert aussi à les numéroter sans trou : PLA-2026-0001, PLA-2026-0002…</div>
+        <div class="deux-colonnes">
+          <form id="f-journaux" class="carte formulaire">
+            <h2>Ajouter un journal</h2>
+            <label>Code <input name="code" placeholder="BQ" required></label>
+            <label>Libellé <input name="libelle" placeholder="Banque"></label>
+            <label>Code dans votre logiciel comptable <span class="facultatif">facultatif</span><input name="codeExterne" placeholder="BQ1"></label>
+            <button>Ajouter le journal</button>
+          </form>
+          <div class="carte liste"><table><thead><tr><th>Code</th><th>Libellé</th><th>Code externe</th><th><span class="visuel-cache">Actions</span></th></tr></thead><tbody id="t-journaux"></tbody></table></div>
+        </div>
+      </div>
+
+      <div class="bloc" data-bloc="evenements" hidden>
+        <div class="explication"><b>Un événement</b> est le fait précis que l'application envoie : l'achat d'une obligation, un coupon encaissé. Il a une seule opération et va dans un seul journal.</div>
+        <div class="deux-colonnes">
+          <form id="f-evenements" class="carte formulaire">
+            <h2>Ajouter un événement</h2>
+            <label>Code <input name="code" placeholder="ACQ_DAT" required></label>
+            <label>Libellé <input name="libelle" placeholder="Placement en dépôt à terme"></label>
+            <label>Opération <select name="operationCode" data-liste="operations" required></select></label>
+            <label>Journal <select name="journalCode" data-liste="journaux" required></select></label>
+            <button>Ajouter l'événement</button>
+          </form>
+          <div class="carte liste"><table><thead><tr><th>Code</th><th>Libellé</th><th>Opération</th><th>Journal</th><th><span class="visuel-cache">Actions</span></th></tr></thead><tbody id="t-evenements"></tbody></table></div>
+        </div>
+      </div>
+
+      <div class="bloc" data-bloc="rubriques" hidden>
+        <div class="explication"><b>Une rubrique</b> nomme une ligne d'écriture : « valeur du titre », « frais ». Sa nature dit ce qu'elle représente : ce que l'on possède, dépense, doit ou gagne.</div>
+        <div class="deux-colonnes">
+          <form id="f-rubriques" class="carte formulaire">
+            <h2>Ajouter une rubrique</h2>
+            <label>Code <input name="code" placeholder="R09" required></label>
+            <label>Libellé <input name="libelle" placeholder="Dette de règlement"></label>
+            <label>Nature
+              <select name="nature" required>
+                <option value="ACTIF">Actif · ce que l'on possède (augmente au débit)</option>
+                <option value="CHARGE">Charge · ce que l'on dépense (augmente au débit)</option>
+                <option value="PASSIF">Passif · ce que l'on doit (augmente au crédit)</option>
+                <option value="PRODUIT">Produit · ce que l'on gagne (augmente au crédit)</option>
+              </select>
+            </label>
+            <button>Ajouter la rubrique</button>
+          </form>
+          <div class="carte liste"><table><thead><tr><th>Code</th><th>Libellé</th><th>Nature</th><th><span class="visuel-cache">Actions</span></th></tr></thead><tbody id="t-rubriques"></tbody></table></div>
+        </div>
+      </div>
+
+      <div class="bloc" data-bloc="comptes" hidden>
+        <div class="explication"><b>Un compte</b> est un numéro du plan de comptes de la compagnie. Chaque compte regroupe les lignes d'un même type, comme une page du grand livre.</div>
+        <div class="deux-colonnes">
+          <form id="f-comptes" class="carte formulaire">
+            <h2>Ajouter un compte</h2>
+            <label>Numéro <input name="code" placeholder="2756" required inputmode="numeric"></label>
+            <label>Libellé <input name="libelle" placeholder="Actions"></label>
+            <button>Ajouter le compte</button>
+          </form>
+          <div class="carte liste"><table><thead><tr><th>Numéro</th><th>Libellé</th><th>Créé par</th><th><span class="visuel-cache">Actions</span></th></tr></thead><tbody id="t-comptes"></tbody></table></div>
+        </div>
+      </div>
+
+      <div class="bloc" data-bloc="mappings" hidden>
+        <div class="explication"><b>Le mapping</b> dit dans quel compte va chaque rubrique, selon le type de titre. Laissez un champ vide pour « tous ». Quand plusieurs lignes conviennent, le moteur prend la plus précise.</div>
+        <div class="deux-colonnes">
+          <form id="f-mappings" class="carte formulaire">
+            <h2>Ajouter une ligne de mapping</h2>
+            <label>Rubrique <select name="rubriqueCode" data-liste="rubriques" required></select></label>
+            <label>Classe d'actifs <span class="facultatif">vide = toutes</span><input name="classeActif" placeholder="ACTION"></label>
+            <label>Catégorie <span class="facultatif">vide = toutes</span><input name="categorie" placeholder="SOCIETE"></label>
+            <label>Compte <select name="compteCode" data-liste="comptes" required></select></label>
+            <button>Ajouter la ligne</button>
+          </form>
+          <div class="carte liste"><table><thead><tr><th>Rubrique</th><th>Classe</th><th>Catégorie</th><th>Compte</th><th><span class="visuel-cache">Actions</span></th></tr></thead><tbody id="t-mappings"></tbody></table></div>
+        </div>
+      </div>
+
+      <div class="bloc" data-bloc="recettes" hidden>
+        <div class="explication"><b>Une recette</b> dit quelles lignes écrire pour un événement, de quel côté, avec quel montant. Une recette publiée ne change plus : pour la modifier, enregistrez une nouvelle version. Les écritures déjà créées gardent leur version.</div>
+        <form id="f-recettes" class="carte formulaire large">
+          <h2>Nouvelle recette</h2>
+          <div class="grille">
+            <label>Événement <select name="evenementCode" data-liste="evenements" required></select></label>
+            <label>Valable à partir du <span class="facultatif">facultatif</span><input type="date" name="dateEffet"></label>
+          </div>
+          <table class="saisie">
+            <thead><tr><th>Rubrique</th><th>Côté</th><th>Montant reçu à utiliser</th><th>Facultative</th><th><span class="visuel-cache">Retirer</span></th></tr></thead>
+            <tbody id="lignes-recette"></tbody>
+          </table>
+          <button type="button" id="ajouter-ligne" class="secondaire">Ajouter une ligne</button>
+          <div id="apercu-recette" class="apercu" aria-live="polite"></div>
+          <label class="case"><input type="checkbox" name="publier" checked> Publier tout de suite</label>
+          <button>Enregistrer la recette</button>
+        </form>
+        <div id="t-recettes"></div>
+      </div>
+    </section>
+
+    <!-- =================== 2. GÉNÉRER =================== -->
+    <section id="generer" class="panneau" hidden>
+      <h1>Générer une écriture</h1>
+      <p class="intro">Vous jouez le rôle de l'application qui envoie un événement. Choisissez-le : les montants à saisir viennent de sa recette. Le moteur range ces montants dans les bons comptes, sans rien calculer.</p>
+      <form id="f-generer" class="carte formulaire large">
+        <div class="grille">
+          <label>Événement <select name="evenement" id="g-evenement" required></select></label>
+          <label>Date de l'opération <input type="date" name="dateValeur" id="g-date" required></label>
+          <label>Classe d'actifs <input name="classeActif" value="OBLIGATION"></label>
+          <label>Catégorie <input name="categorie" value="ETAT"></label>
+          <label>Titre concerné <span class="facultatif">facultatif</span><input name="referenceTitre" placeholder="OAT-SN-2030"></label>
+          <label>Identifiant de l'événement <input name="eventId" id="g-eventId" required></label>
+        </div>
+        <p class="note">Renvoyer le même identifiant ne crée pas de deuxième écriture : c'est voulu.</p>
+        <h2>Montants reçus</h2>
+        <div id="g-montants" class="grille"></div>
+        <div class="actions">
+          <button type="button" id="g-exemple" class="secondaire">Remplir l'exemple</button>
+          <button>Générer l'écriture</button>
+        </div>
+      </form>
+      <div id="g-resultat"></div>
+    </section>
+
+    <!-- =================== 3. VALIDER =================== -->
+    <section id="ecritures" class="panneau" hidden>
+      <h1>Valider les écritures</h1>
+      <p class="intro">Une écriture est validée par une autre personne que celle qui l'a créée. À la validation, elle reçoit son numéro et ne peut plus changer. Pour essayer : créez en tant que gestionnaire, validez en tant que comptable.</p>
+      <div class="deux-colonnes large-droite">
+        <div class="carte liste"><table><thead><tr><th>N°</th><th>Événement</th><th>Statut</th><th class="num">Débit</th><th class="num">Crédit</th></tr></thead><tbody id="t-ecritures"></tbody></table></div>
+        <div id="detail-ecriture"><div class="vide">Choisissez une écriture dans la liste pour voir ses lignes.</div></div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script src="config.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
