@@ -1,7 +1,7 @@
 # ---------- Étape 1 : préparer les fichiers du site ----------
 FROM alpine:3.20 AS build
 WORKDIR /site
-COPY index.html tables.html tables.svg styles.css app.js favicon.svg retours-financier.xlsx ./
+COPY index.html tables.html tables.svg styles.css app.js favicon.svg ./
 # config.js est généré au démarrage (étape 2) : on retire la version locale
 RUN rm -f config.js
 

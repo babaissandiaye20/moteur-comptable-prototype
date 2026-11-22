@@ -21,7 +21,6 @@
     </select>
   </div>
   <a class="lien-retours" href="tables.html">Les tables expliquées</a>
-  <a class="lien-retours" href="retours-financier.xlsx" download>Grille de retours</a>
 </header>
 
 <div class="page">
@@ -38,6 +37,7 @@
     </ol>
     <button class="etape" data-etape="generer"><span class="num">2</span>Générer une écriture</button>
     <button class="etape" data-etape="ecritures"><span class="num">3</span>Valider les écritures</button>
+    <button class="etape" data-etape="retours"><span class="num">4</span>Donner vos retours</button>
   </aside>
 
   <main>
@@ -183,6 +183,33 @@
         <table class="liste-ecritures"><thead><tr><th>N°</th><th>Événement</th><th>Statut</th><th class="num">Montant</th></tr></thead><tbody id="t-ecritures"></tbody></table>
         <div id="detail-ecriture"><p class="vide">Choisissez une écriture pour voir ses lignes.</p></div>
       </div>
+    </section>
+    <!-- =================== 4. RETOURS =================== -->
+    <section id="retours" class="panneau" hidden>
+      <h1>Donner vos retours</h1>
+      <p class="phrase">Pour chaque point, indiquez s'il fonctionne et écrivez ce qui ne va pas ou ce qui manque. Tout s'enregistre dès que vous changez un statut ou quittez une observation.</p>
+      <div class="bilan" id="r-bilan" aria-live="polite"></div>
+      <div class="ajout filtres">
+        <label>Afficher
+          <select id="r-filtre">
+            <option value="">Tous les points</option>
+            <option value="NON_TESTE">Non testés</option>
+            <option value="VALIDE">Valides</option>
+            <option value="PAS_VALIDE">Pas valides</option>
+            <option value="RESTE_A_FAIRE">Reste à faire</option>
+          </select>
+        </label>
+        <button type="button" id="r-csv" class="secondaire">Télécharger (CSV, s'ouvre dans Excel)</button>
+      </div>
+      <table class="grille-retours">
+        <thead><tr><th>N°</th><th>Ce qu'il faut vérifier</th><th>Statut</th><th>Observation</th><th></th></tr></thead>
+        <tbody id="t-retours"></tbody>
+      </table>
+      <form id="f-retour" class="ajout">
+        <label>Fonctionnalité<input name="fonctionnalite" placeholder="Recettes"></label>
+        <label class="large">Point à ajouter<input name="critere" placeholder="Ce qui manque ou ce qu'il faudrait vérifier" required></label>
+        <button>Ajouter le point</button>
+      </form>
     </section>
   </main>
 </div>

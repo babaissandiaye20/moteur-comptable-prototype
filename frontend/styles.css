@@ -183,3 +183,27 @@ legend{font-weight:600;padding:0 8px 0 0}
 .sommaire{display:flex;flex-wrap:wrap;gap:8px 18px;margin:12px 0 0;padding:0;list-style:none;font-size:14px}
 .sommaire a{color:var(--debit)}
 .retour{color:#fff;font-size:14px}
+
+/* Retours du testeur */
+.bilan{display:flex;gap:28px;flex-wrap:wrap;margin:0 0 8px}
+.bilan div{display:flex;flex-direction:column}
+.bilan strong{font-size:26px;line-height:1.1}
+.bilan span{font-size:13px;color:var(--doux)}
+.bilan .VALIDE strong{color:var(--juste)}
+.bilan .PAS_VALIDE strong{color:var(--erreur)}
+.bilan .RESTE_A_FAIRE strong{color:var(--attente)}
+.filtres{border-top:0;padding-top:4px}
+.filtres label{flex:0 1 240px}
+.filtres button{margin-left:auto}
+.grille-retours td{vertical-align:top}
+.grille-retours td:first-child{color:var(--doux);width:44px}
+.grille-retours .fonction{display:block;font-size:12px;font-weight:600;color:var(--doux)}
+.grille-retours .ou{display:block;font-size:12px;color:var(--doux)}
+.grille-retours select{min-width:150px}
+.grille-retours textarea{width:100%;min-height:42px;padding:8px 10px;border:1px solid #c3ccda;border-radius:6px;font:inherit;font-size:14px;resize:vertical}
+.grille-retours tr.VALIDE{background:#f2faf6}
+.grille-retours tr.PAS_VALIDE{background:#fdf3f2}
+.grille-retours tr.RESTE_A_FAIRE{background:#fffaf0}
+.enregistre{font-size:12px;color:var(--juste);display:block;margin-top:4px;min-height:16px}
+.grille-retours th:nth-child(4),.grille-retours td:nth-child(4){width:36%}
+.grille-retours textarea{min-height:64px}

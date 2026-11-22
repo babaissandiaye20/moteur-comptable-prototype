@@ -74,6 +74,7 @@ function allerA(etape) {
   $$(".panneau").forEach((p) => { p.hidden = p.id !== etape; });
   if (etape === "generer") preparerGeneration();
   if (etape === "ecritures") chargerEcritures();
+  if (etape === "retours") chargerRetours();
   window.scrollTo(0, 0);
 }
 $$(".etape").forEach((b) => b.onclick = () => allerA(b.dataset.etape));
@@ -410,6 +411,81 @@ async function chargerEcritures(idChoisi) {
     return tr;
   }));
 }
+
+// =================== 4. RETOURS ===================
+const STATUTS_RETOUR = { NON_TESTE: "Non testé", VALIDE: "Valide", PAS_VALIDE: "Pas valide", RESTE_A_FAIRE: "Reste à faire" };
+let retours = [];
+
+async function chargerRetours() {
+  try { retours = await api("/api/retours"); } catch (e) { message(e.message, false); return; }
+  afficherRetours();
+}
+
+function afficherBilan() {
+  const compte = (s) => retours.filter((r) => r.statut === s).length;
+  $("#r-bilan").replaceChildren(...Object.entries(STATUTS_RETOUR).map(([code, libelle]) =>
+    el("div", { class: code }, el("strong", {}, String(compte(code))), el("span", {}, libelle))));
+}
+
+function afficherRetours() {
+  afficherBilan();
+  const filtre = $("#r-filtre").value;
+  const liste = retours.filter((r) => !filtre || r.statut === filtre);
+  const corps = $("#t-retours");
+  if (!liste.length) { corps.replaceChildren(el("tr", {}, el("td", { colspan: 5, class: "vide" }, "Aucun point pour ce filtre."))); return; }
+  corps.replaceChildren(...liste.map((r) => {
+    const etat = el("span", { class: "enregistre" });
+    const choix = el("select", { "aria-label": `Statut du point ${r.ordre}` },
+      Object.entries(STATUTS_RETOUR).map(([v, t]) => new Option(t, v)));
+    choix.value = r.statut;
+    const obs = el("textarea", { "aria-label": `Observation sur le point ${r.ordre}`, placeholder: "Ce qui ne va pas, ce qui manque…" });
+    obs.value = r.observation ?? "";
+    const tr = el("tr", { class: r.statut },
+      el("td", {}, String(r.ordre)),
+      el("td", {}, el("span", { class: "fonction" }, r.fonctionnalite), r.critere, r.ouTester ? el("span", { class: "ou" }, `Où : ${r.ouTester}`) : ""),
+      el("td", {}, choix, etat),
+      el("td", {}, obs),
+      el("td", {}, r.ajouteParTesteur ? el("button", { type: "button", class: "effacer", onclick: async () => {
+        if (!confirm("Supprimer ce point ?")) return;
+        try { await api(`/api/retours/${r.id}`, { method: "DELETE" }); await chargerRetours(); } catch (e) { message(e.message, false); }
+      } }, "Supprimer") : ""));
+    const enregistrer = async () => {
+      if (choix.value === r.statut && (obs.value.trim() || "") === (r.observation ?? "")) return;
+      etat.textContent = "Enregistrement…";
+      try {
+        const maj = await api(`/api/retours/${r.id}`, { method: "PUT", body: JSON.stringify({ statut: choix.value, observation: obs.value }) });
+        Object.assign(r, maj);
+        tr.className = r.statut;
+        etat.textContent = `Enregistré par ${maj.updatedBy ?? utilisateur()}`;
+        afficherBilan();
+      } catch (e) { etat.textContent = ""; message(e.message, false); }
+    };
+    choix.onchange = enregistrer;
+    obs.onblur = enregistrer;
+    return tr;
+  }));
+}
+$("#r-filtre").onchange = afficherRetours;
+
+$("#f-retour").onsubmit = async (ev) => {
+  ev.preventDefault();
+  try {
+    await post("/api/retours", Object.fromEntries(new FormData(ev.target).entries()));
+    message("Point ajouté à la grille.");
+    ev.target.reset();
+    await chargerRetours();
+  } catch (e) { message(e.message, false); }
+};
+
+// Export CSV (séparateur point-virgule, BOM UTF-8 : s'ouvre directement dans Excel)
+$("#r-csv").onclick = () => {
+  const champ = (v) => `"${String(v ?? "").replaceAll('"', '""')}"`;
+  const lignes = [["N°", "Fonctionnalité", "Où tester", "Ce qu'il faut vérifier", "Statut", "Observation", "Modifié par", "Modifié le"],
+    ...retours.map((r) => [r.ordre, r.fonctionnalite, r.ouTester, r.critere, STATUTS_RETOUR[r.statut], r.observation, r.updatedBy, r.updatedAt])];
+  const csv = "\uFEFF" + lignes.map((l) => l.map(champ).join(";")).join("\r\n");
+  const lien = el("a", { href: URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" })), download: "retours-moteur-comptable.csv" });
+  document.body.append(lien); lien.click(); lien.remove();
+};
 
 // ---------- Démarrage ----------
 chargerParametrage()
