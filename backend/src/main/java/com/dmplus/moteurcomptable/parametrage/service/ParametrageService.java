@@ -56,24 +56,24 @@ public class ParametrageService {
 
     public Operation creerOperation(String code, String libelle) {
         String c = code(code);
-        if (operations.existeSupprime(c)) {
-            operations.restaurer(c); // supprimé puis recréé : on le restaure
-            return operations.findById(c).orElseThrow();
-        }
         if (operations.existsById(c)) {
             throw dejaExistant("L'opération", c);
+        }
+        if (operations.existeSupprime(c)) { // supprimé puis recréé : on restaure la ligne avec les nouvelles valeurs
+            operations.restaurer(c, libelle);
+            return operations.findById(c).orElseThrow();
         }
         return operations.save(new Operation(c, libelle));
     }
 
     public Journal creerJournal(String code, String libelle, String codeExterne) {
         String c = code(code);
-        if (journaux.existeSupprime(c)) {
-            journaux.restaurer(c); // supprimé puis recréé : on le restaure
-            return journaux.findById(c).orElseThrow();
-        }
         if (journaux.existsById(c)) {
             throw dejaExistant("Le journal", c);
+        }
+        if (journaux.existeSupprime(c)) { // supprimé puis recréé : on restaure la ligne avec les nouvelles valeurs
+            journaux.restaurer(c, libelle, codeExterne);
+            return journaux.findById(c).orElseThrow();
         }
         return journaux.save(new Journal(c, libelle, codeExterne));
     }
@@ -81,10 +81,6 @@ public class ParametrageService {
     /** Un événement appartient à UNE seule opération et va dans UN journal, tous deux existants. */
     public Evenement creerEvenement(String code, String libelle, String operationCode, String journalCode) {
         String c = code(code);
-        if (evenements.existeSupprime(c)) {
-            evenements.restaurer(c); // supprimé puis recréé : on le restaure
-            return evenements.findById(c).orElseThrow();
-        }
         if (evenements.existsById(c)) {
             throw dejaExistant("L'événement", c);
         }
@@ -96,32 +92,36 @@ public class ParametrageService {
         if (!journal.isActif()) {
             throw new MoteurException("JOURNAL_INACTIF", "Le journal " + journalCode + " est fermé");
         }
+        if (evenements.existeSupprime(c)) { // supprimé puis recréé : on restaure la ligne avec les nouvelles valeurs
+            evenements.restaurer(c, libelle, operationCode, journalCode);
+            return evenements.findById(c).orElseThrow();
+        }
         return evenements.save(new Evenement(c, libelle, operationCode, journalCode));
     }
 
     public Rubrique creerRubrique(String code, String libelle, Nature nature) {
         String c = code(code);
-        if (rubriques.existeSupprime(c)) {
-            rubriques.restaurer(c); // supprimé puis recréé : on le restaure
-            return rubriques.findById(c).orElseThrow();
-        }
         if (nature == null) {
             throw new MoteurException("NATURE_REQUISE", "Indiquez la nature : ACTIF, CHARGE, PASSIF ou PRODUIT");
         }
         if (rubriques.existsById(c)) {
             throw dejaExistant("La rubrique", c);
         }
+        if (rubriques.existeSupprime(c)) { // supprimé puis recréé : on restaure la ligne avec les nouvelles valeurs
+            rubriques.restaurer(c, libelle, nature.name());
+            return rubriques.findById(c).orElseThrow();
+        }
         return rubriques.save(new Rubrique(c, libelle, nature));
     }
 
     public Compte creerCompte(String code, String libelle) {
         String c = code(code);
-        if (comptes.existeSupprime(c)) {
-            comptes.restaurer(c); // supprimé puis recréé : on le restaure
-            return comptes.findById(c).orElseThrow();
-        }
         if (comptes.existsById(c)) {
             throw dejaExistant("Le compte", c);
+        }
+        if (comptes.existeSupprime(c)) { // supprimé puis recréé : on restaure la ligne avec les nouvelles valeurs
+            comptes.restaurer(c, libelle);
+            return comptes.findById(c).orElseThrow();
         }
         return comptes.save(new Compte(c, libelle, true));
     }

@@ -15,6 +15,6 @@ public interface CompteRepository extends JpaRepository<Compte, String> {
 
     /** Supprimer puis recréer le même code : on restaure la ligne au lieu d'en créer une seconde. */
     @Modifying(flushAutomatically = true, clearAutomatically = true)
-    @Query(value = "update compte set is_deleted = false where code = :code", nativeQuery = true)
-    int restaurer(@Param("code") String code);
+    @Query(value = "update compte set libelle = :libelle, actif = true, is_deleted = false where code = :code", nativeQuery = true)
+    int restaurer(@Param("code") String code, @Param("libelle") String libelle);
 }

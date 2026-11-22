@@ -15,6 +15,6 @@ public interface RubriqueRepository extends JpaRepository<Rubrique, String> {
 
     /** Supprimer puis recréer le même code : on restaure la ligne au lieu d'en créer une seconde. */
     @Modifying(flushAutomatically = true, clearAutomatically = true)
-    @Query(value = "update rubrique set is_deleted = false where code = :code", nativeQuery = true)
-    int restaurer(@Param("code") String code);
+    @Query(value = "update rubrique set libelle = :libelle, nature = :nature, is_deleted = false where code = :code", nativeQuery = true)
+    int restaurer(@Param("code") String code, @Param("libelle") String libelle, @Param("nature") String nature);
 }

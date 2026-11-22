@@ -15,6 +15,6 @@ public interface JournalRepository extends JpaRepository<Journal, String> {
 
     /** Supprimer puis recréer le même code : on restaure la ligne au lieu d'en créer une seconde. */
     @Modifying(flushAutomatically = true, clearAutomatically = true)
-    @Query(value = "update journal set is_deleted = false where code = :code", nativeQuery = true)
-    int restaurer(@Param("code") String code);
+    @Query(value = "update journal set libelle = :libelle, code_externe = :codeExterne, is_deleted = false where code = :code", nativeQuery = true)
+    int restaurer(@Param("code") String code, @Param("libelle") String libelle, @Param("codeExterne") String codeExterne);
 }

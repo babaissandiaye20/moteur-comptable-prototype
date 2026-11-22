@@ -15,8 +15,8 @@ public interface EvenementRepository extends JpaRepository<Evenement, String> {
 
     /** Supprimer puis recréer le même code : on restaure la ligne au lieu d'en créer une seconde. */
     @Modifying(flushAutomatically = true, clearAutomatically = true)
-    @Query(value = "update evenement set is_deleted = false where code = :code", nativeQuery = true)
-    int restaurer(@Param("code") String code);
+    @Query(value = "update evenement set libelle = :libelle, operation_code = :operationCode, journal_code = :journalCode, is_deleted = false where code = :code", nativeQuery = true)
+    int restaurer(@Param("code") String code, @Param("libelle") String libelle, @Param("operationCode") String operationCode, @Param("journalCode") String journalCode);
     boolean existsByOperationCode(String operationCode);
     boolean existsByJournalCode(String journalCode);
     java.util.List<Evenement> findByOperationCode(String operationCode);

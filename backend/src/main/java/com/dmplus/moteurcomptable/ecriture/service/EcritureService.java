@@ -124,7 +124,10 @@ public class EcritureService {
 
     public EcritureDto annuler(Long id, String utilisateur) {
         Ecriture ecriture = trouver(id);
-        ecriture.annuler(utilisateur == null || utilisateur.isBlank() ? "inconnu" : utilisateur);
+        if (utilisateur == null || utilisateur.isBlank()) {
+            throw new MoteurException("UTILISATEUR_REQUIS", "Indiquez qui annule l'écriture");
+        }
+        ecriture.annuler(utilisateur.trim());
         return EcritureDto.de(ecriture);
     }
 
