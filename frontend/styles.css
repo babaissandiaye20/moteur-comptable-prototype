@@ -207,3 +207,4 @@ legend{font-weight:600;padding:0 8px 0 0}
 .enregistre{font-size:12px;color:var(--juste);display:block;margin-top:4px;min-height:16px}
 .grille-retours th:nth-child(4),.grille-retours td:nth-child(4){width:36%}
 .grille-retours textarea{min-height:64px}
+.reveil{margin:0 0 16px;padding:12px 16px;border-left:4px solid var(--attente);background:#fffaf0;font-size:14px}

@@ -417,7 +417,13 @@ const STATUTS_RETOUR = { NON_TESTE: "Non testé", VALIDE: "Valide", PAS_VALIDE: 
 let retours = [];
 
 async function chargerRetours() {
-  try { retours = await api("/api/retours"); } catch (e) { message(e.message, false); return; }
+  try { retours = await api("/api/retours"); } catch (e) {
+    const texte = /404/.test(e.message) && !e.code
+      ? "La grille de retours n'est pas encore disponible sur le serveur : il est en cours de mise à jour. Réessayez dans quelques minutes."
+      : e.message;
+    $("#t-retours").replaceChildren(el("tr", {}, el("td", { colspan: 5, class: "vide" }, texte)));
+    return;
+  }
   afficherRetours();
 }
 
@@ -492,7 +498,24 @@ $("#r-csv").onclick = () => {
   document.body.append(lien); lien.click(); lien.remove();
 };
 
+// ---------- Réveil du serveur ----------
+// Sur l'offre gratuite de Render, le serveur s'endort après 15 minutes sans visite : le premier appel peut prendre une minute.
+async function attendreServeur() {
+  const bandeau = $("#reveil");
+  const minuterie = setTimeout(() => { bandeau.hidden = false; }, 2500);
+  for (let essai = 0; essai < 30; essai++) {
+    try {
+      const rep = await fetch(API + "/api/sante", { cache: "no-store" });
+      if (rep.ok) break;
+    } catch { /* serveur encore endormi */ }
+    await new Promise((r) => setTimeout(r, 4000));
+  }
+  clearTimeout(minuterie);
+  bandeau.hidden = true;
+}
+
 // ---------- Démarrage ----------
-chargerParametrage()
+attendreServeur()
+  .then(chargerParametrage)
   .then(() => { ajouterLigneRecette("D"); ajouterLigneRecette("C"); })
   .catch((e) => message(e.message, false));

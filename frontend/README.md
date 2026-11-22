@@ -4,7 +4,6 @@ Page statique (HTML, CSS, JS) qui appelle l'API du back.
 
 - `config.js` : adresse du back (à fixer avec l'URL Render).
 - `tables.html` : les tables expliquées, pour le lead.
-- `retours-financier.xlsx` : la grille de retours du financier.
 
 ## Déployer sur Vercel
 Importer le dépôt, Framework Preset : *Other*, aucune commande de build.
