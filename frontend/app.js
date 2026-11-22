@@ -479,7 +479,12 @@ $("#f-retour").onsubmit = async (ev) => {
 
 // Export CSV (séparateur point-virgule, BOM UTF-8 : s'ouvre directement dans Excel)
 $("#r-csv").onclick = () => {
-  const champ = (v) => `"${String(v ?? "").replaceAll('"', '""')}"`;
+  // Une cellule qui commence par = + - @ serait exécutée comme formule par Excel : on la neutralise.
+  const champ = (v) => {
+    let t = String(v ?? "");
+    if (/^[=+\-@\t\r]/.test(t)) t = "'" + t;
+    return `"${t.replaceAll('"', '""')}"`;
+  };
   const lignes = [["N°", "Fonctionnalité", "Où tester", "Ce qu'il faut vérifier", "Statut", "Observation", "Modifié par", "Modifié le"],
     ...retours.map((r) => [r.ordre, r.fonctionnalite, r.ouTester, r.critere, STATUTS_RETOUR[r.statut], r.observation, r.updatedBy, r.updatedAt])];
   const csv = "\uFEFF" + lignes.map((l) => l.map(champ).join(";")).join("\r\n");
