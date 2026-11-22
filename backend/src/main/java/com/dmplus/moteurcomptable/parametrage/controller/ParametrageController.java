@@ -23,6 +23,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -91,29 +92,34 @@ public class ParametrageController {
 
     @DeleteMapping("/operations/{code}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void supprimerOperation(@PathVariable String code) { service.supprimerOperation(code); }
+    public void supprimerOperation(@PathVariable String code, @RequestParam(defaultValue = "false") boolean cascade) { service.supprimerOperation(code, cascade); }
 
     @DeleteMapping("/journaux/{code}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void supprimerJournal(@PathVariable String code) { service.supprimerJournal(code); }
+    public void supprimerJournal(@PathVariable String code, @RequestParam(defaultValue = "false") boolean cascade) { service.supprimerJournal(code, cascade); }
 
     @DeleteMapping("/evenements/{code}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void supprimerEvenement(@PathVariable String code) { service.supprimerEvenement(code); }
+    public void supprimerEvenement(@PathVariable String code, @RequestParam(defaultValue = "false") boolean cascade) { service.supprimerEvenement(code, cascade); }
 
     @DeleteMapping("/rubriques/{code}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void supprimerRubrique(@PathVariable String code) { service.supprimerRubrique(code); }
+    public void supprimerRubrique(@PathVariable String code, @RequestParam(defaultValue = "false") boolean cascade) { service.supprimerRubrique(code, cascade); }
 
     @DeleteMapping("/comptes/{code}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void supprimerCompte(@PathVariable String code) { service.supprimerCompte(code); }
+    public void supprimerCompte(@PathVariable String code, @RequestParam(defaultValue = "false") boolean cascade) { service.supprimerCompte(code, cascade); }
 
     @DeleteMapping("/mappings/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void supprimerMapping(@PathVariable Long id) { service.supprimerMapping(id); }
 
-    /** Une recette ne se supprime pas : on la retire. Les écritures passées la gardent. */
+    /** Brouillon : effacé. Publiée : retirée, car les écritures passées la gardent. */
+    @DeleteMapping("/recettes/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void supprimerRecette(@PathVariable Long id) { service.supprimerRecette(id); }
+
+    /** Retirer une recette publiée. */
     @PostMapping("/recettes/{id}/retirer")
     public Recette retirerRecette(@PathVariable Long id) { return service.retirerRecette(id); }
 

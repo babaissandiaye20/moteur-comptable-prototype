@@ -134,6 +134,8 @@ legend{font-weight:600;padding:0 8px 0 0}
 .piece-actions{padding:14px 22px;display:flex;gap:14px;align-items:center;flex-wrap:wrap;border-top:1px solid var(--regle)}
 .piece-actions p{margin:0;font-size:14px;color:var(--doux);flex:1 1 220px}
 .piece-actions button{background:var(--juste);border-color:var(--juste)}
+.piece-actions button.secondaire{background:var(--feuille);color:var(--encre);border-color:#c3ccda}
+.statut.ANNULEE{background:#eceff4;color:var(--doux);text-decoration:line-through}
 .refus{border-left:4px solid var(--erreur);background:var(--erreur-clair);color:var(--erreur);padding:14px 18px;margin-bottom:16px}
 .refus b{display:block;margin-bottom:2px}
 
@@ -145,7 +147,7 @@ legend{font-weight:600;padding:0 8px 0 0}
 .liste-ecritures td:first-child{font-weight:600;white-space:nowrap}
 
 /* Messages */
-.message{padding:12px 16px;margin:0 0 20px;font-weight:500;border-left:4px solid}
+.message{position:fixed;z-index:10;right:24px;bottom:24px;max-width:460px;padding:14px 18px;font-weight:500;border-left:4px solid;box-shadow:0 6px 24px rgba(29,43,74,.18)}
 .message.ok{background:var(--juste-clair);color:var(--juste)}
 .message.ko{background:var(--erreur-clair);color:var(--erreur)}
 
@@ -165,3 +167,19 @@ legend{font-weight:600;padding:0 8px 0 0}
   th,td{padding:9px 6px}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+
+/* Page de documentation */
+.doc{max-width:1100px}
+.doc h1{margin-bottom:8px}
+.doc h2{font-size:21px;margin:40px 0 8px;padding-top:16px;border-top:2px solid var(--regle-forte)}
+.doc h3{font-size:17px;margin:28px 0 6px}
+.doc p,.doc li{max-width:80ch}
+.doc table{margin:8px 0 16px;background:var(--feuille)}
+.doc td:last-child{text-align:left}
+.doc code{font-family:ui-monospace,Consolas,monospace;font-size:13px;background:#eceff4;padding:1px 5px;border-radius:4px}
+.doc figure{margin:16px 0 8px;background:var(--feuille);border:1px solid var(--regle);padding:12px;overflow-x:auto}
+.doc figure img{max-width:100%;height:auto;display:block;margin:0 auto}
+.doc hr{display:none}
+.sommaire{display:flex;flex-wrap:wrap;gap:8px 18px;margin:12px 0 0;padding:0;list-style:none;font-size:14px}
+.sommaire a{color:var(--debit)}
+.retour{color:#fff;font-size:14px}

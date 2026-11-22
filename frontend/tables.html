@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tables du moteur comptable</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header class="barre">
+  <div class="marque"><strong>Moteur comptable</strong> <span>documentation technique</span></div>
+  <a class="retour" href="index.html">Revenir à l'application</a>
+</header>
+<main class="doc" style="margin:0 auto">
+<h1>Les tables du moteur comptable</h1>
+<ul class="sommaire"><li><a href="#colonnes-communes-package-shared">Colonnes communes (package `shared`)</a></li><li><a href="#a-param-trage-package-parametrage">A. Paramétrage (package `parametrage`)</a></li><li><a href="#b-critures-package-ecriture">B. Écritures (package `ecriture`)</a></li></ul>
+<figure><img src="tables.svg" alt="Schéma des 12 tables et de leurs liens"></figure>
+<p>Schéma : <code>tables.png</code> (source <code>tables.puml</code>). 12 tables en deux familles : le <b>paramétrage</b>, que le comptable remplit, et les <b>écritures</b>, que le moteur produit.</p>
+<p>Prototype : Hibernate crée les tables à partir des entités. La version finale passera par des scripts de migration.</p>
+<h2 id="colonnes-communes-package-shared">Colonnes communes (package <code>shared</code>)</h2>
+<table><thead><tr><th>Colonne</th><th>Type</th><th>Pourquoi</th></tr></thead><tbody>
+<tr><td><code>created_by</code></td><td>VARCHAR</td><td>Savoir qui a créé la ligne. Rempli tout seul à partir de l&#x27;en-tête HTTP <code>X-Utilisateur</code></td></tr>
+<tr><td><code>created_at</code></td><td>TIMESTAMP</td><td>Savoir quand. Rempli tout seul</td></tr>
+<tr><td><code>updated_by</code></td><td>VARCHAR</td><td>Savoir qui a modifié en dernier</td></tr>
+<tr><td><code>updated_at</code></td><td>TIMESTAMP</td><td>Savoir quand</td></tr>
+<tr><td><code>is_deleted</code></td><td>BOOLEAN</td><td>Suppression douce : la ligne reste en base, car des écritures passées peuvent y faire référence, mais elle disparaît des recherches. Refusée tant que l&#x27;élément est utilisé</td></tr>
+</tbody></table>
+<p>Classes : <code>EntiteAuditee</code> (les quatre premières colonnes) et <code>EntiteSupprimable</code> (+ <code>is_deleted</code>).</p>
+<p><b>Les écritures n&#x27;ont pas de <code>is_deleted</code>.</b> Une écriture comptable ne se supprime pas : on la corrige par une écriture inverse. Une recette non plus : on la retire.</p>
+<h2 id="a-param-trage-package-parametrage">A. Paramétrage (package <code>parametrage</code>)</h2>
+<h3 id="operation-la-famille-d-action"><code>operation</code> : la famille d&#x27;action</h3>
+<table><thead><tr><th>Colonne</th><th>Type</th><th>Pourquoi</th></tr></thead><tbody>
+<tr><td><code>code</code></td><td>VARCHAR, clé</td><td>Identifiant stable, utilisé par les événements. Ex. <code>ACHAT</code></td></tr>
+<tr><td><code>libelle</code></td><td>VARCHAR</td><td>Le nom affiché</td></tr>
+</tbody></table>
+<p>Règles : code unique ; suppression refusée si un événement l&#x27;utilise.</p>
+<h3 id="journal-le-classeur-des-critures-de-m-me-nature"><code>journal</code> : le classeur des écritures de même nature</h3>
+<table><thead><tr><th>Colonne</th><th>Type</th><th>Pourquoi</th></tr></thead><tbody>
+<tr><td><code>code</code></td><td>VARCHAR, clé</td><td>Ex. <code>PLA</code> (placements). Sert aussi de préfixe au numéro d&#x27;écriture : <code>PLA-2026-0001</code></td></tr>
+<tr><td><code>libelle</code></td><td>VARCHAR</td><td>Le nom affiché</td></tr>
+<tr><td><code>code_externe</code></td><td>VARCHAR</td><td>Le code du même journal dans le logiciel comptable de la compagnie, pour l&#x27;export. Facultatif</td></tr>
+<tr><td><code>actif</code></td><td>BOOLEAN</td><td>Un journal fermé ne reçoit plus d&#x27;écritures, mais garde les anciennes</td></tr>
+</tbody></table>
+<p>Règles : paramétré une fois puis choisi dans une liste, pour éviter les fautes de frappe ; suppression refusée si un événement l&#x27;utilise.</p>
+<h3 id="evenement-le-fait-pr-cis"><code>evenement</code> : le fait précis</h3>
+<table><thead><tr><th>Colonne</th><th>Type</th><th>Pourquoi</th></tr></thead><tbody>
+<tr><td><code>code</code></td><td>VARCHAR, clé</td><td>Ce que l&#x27;application source envoie. Ex. <code>ACQ_OBLIGATION</code></td></tr>
+<tr><td><code>libelle</code></td><td>VARCHAR</td><td>Le nom affiché</td></tr>
+<tr><td><code>operation_code</code></td><td>VARCHAR, FK</td><td><b>Une seule</b> opération par événement (règle du financier). Une seule colonne rend la règle impossible à contourner</td></tr>
+<tr><td><code>journal_code</code></td><td>VARCHAR, FK</td><td>Le journal où vont toutes ses écritures. Défini une fois ici, plutôt qu&#x27;à chaque écriture</td></tr>
+</tbody></table>
+<p>Règles : opération et journal existants et ouverts ; suppression refusée tant qu&#x27;une recette publiée existe.</p>
+<h3 id="rubrique-le-nom-d-une-ligne-d-criture"><code>rubrique</code> : le nom d&#x27;une ligne d&#x27;écriture</h3>
+<table><thead><tr><th>Colonne</th><th>Type</th><th>Pourquoi</th></tr></thead><tbody>
+<tr><td><code>code</code></td><td>VARCHAR, clé</td><td>Ex. <code>R01</code>. Les recettes parlent en rubriques, jamais en numéros de compte</td></tr>
+<tr><td><code>libelle</code></td><td>VARCHAR</td><td>Ex. « Valeur d&#x27;inscription du titre »</td></tr>
+<tr><td><code>nature</code></td><td>ACTIF / CHARGE / PASSIF / PRODUIT</td><td>Dit ce que représente la ligne, et donc de quel côté elle augmente (actif et charge au débit, passif et produit au crédit)</td></tr>
+</tbody></table>
+<p>Règles : nature obligatoire ; suppression refusée si un mapping ou une recette l&#x27;utilise.</p>
+<h3 id="compte-une-page-du-grand-livre"><code>compte</code> : une page du grand livre</h3>
+<table><thead><tr><th>Colonne</th><th>Type</th><th>Pourquoi</th></tr></thead><tbody>
+<tr><td><code>code</code></td><td>VARCHAR, clé</td><td>Le numéro du plan de comptes de la compagnie. Ex. <code>2745</code></td></tr>
+<tr><td><code>libelle</code></td><td>VARCHAR</td><td>Ex. « Titres souverains »</td></tr>
+<tr><td><code>actif</code></td><td>BOOLEAN</td><td>Un compte fermé ne reçoit plus de lignes, mais reste lisible dans l&#x27;historique</td></tr>
+</tbody></table>
+<p>Règles : suppression refusée si le mapping l&#x27;utilise.</p>
+<h3 id="mapping-le-r-pertoire-rubrique-compte"><code>mapping</code> : le répertoire rubrique → compte</h3>
+<table><thead><tr><th>Colonne</th><th>Type</th><th>Pourquoi</th></tr></thead><tbody>
+<tr><td><code>id</code></td><td>BIGINT, clé</td><td>Identifiant technique</td></tr>
+<tr><td><code>rubrique_code</code></td><td>VARCHAR, FK</td><td>La rubrique à traduire</td></tr>
+<tr><td><code>classe_actif</code></td><td>VARCHAR</td><td>Ex. <code>OBLIGATION</code>. <code>*</code> = toutes. Une obligation et une action vont dans des comptes différents</td></tr>
+<tr><td><code>categorie</code></td><td>VARCHAR</td><td>Ex. <code>ETAT</code>, <code>SOCIETE</code>. <code>*</code> = toutes. Un titre d&#x27;État et un titre de société vont dans des comptes différents</td></tr>
+<tr><td><code>compte_code</code></td><td>VARCHAR, FK</td><td>Le compte trouvé</td></tr>
+</tbody></table>
+<p>Règles : rubrique existante, compte existant et ouvert, une seule ligne par combinaison. La ligne la plus précise gagne (classe exacte +2, catégorie exacte +1). <b>Grâce au mapping, une seule recette sert à toutes les compagnies</b> : seul le répertoire change.</p>
+<h3 id="recette-la-d-finition-d-un-v-nement-versionn-e"><code>recette</code> : la définition d&#x27;un événement, versionnée</h3>
+<table><thead><tr><th>Colonne</th><th>Type</th><th>Pourquoi</th></tr></thead><tbody>
+<tr><td><code>id</code></td><td>BIGINT, clé</td><td>Identifiant d&#x27;une version précise</td></tr>
+<tr><td><code>evenement_code</code></td><td>VARCHAR, FK</td><td>L&#x27;événement décrit</td></tr>
+<tr><td><code>version</code></td><td>INT</td><td>1, 2, 3… Changer une recette crée une version, sans toucher aux écritures passées</td></tr>
+<tr><td><code>statut</code></td><td>BROUILLON / PUBLIEE / RETIREE</td><td>Seule une version publiée sert. Publiée = figée</td></tr>
+<tr><td><code>date_effet</code></td><td>DATE</td><td>À partir de quand la version s&#x27;applique</td></tr>
+<tr><td><code>publie_par</code>, <code>publie_le</code></td><td>VARCHAR, TIMESTAMP</td><td>Qui a publié, et quand : la décision métier, en plus de la traçabilité technique</td></tr>
+</tbody></table>
+<p>Règles : au moins une ligne au débit et une au crédit pour publier ; aucune modification après publication.</p>
+<h3 id="recette-ligne-une-ligne-de-la-recette"><code>recette_ligne</code> : une ligne de la recette</h3>
+<table><thead><tr><th>Colonne</th><th>Type</th><th>Pourquoi</th></tr></thead><tbody>
+<tr><td><code>id</code></td><td>BIGINT, clé</td><td>Identifiant technique</td></tr>
+<tr><td><code>recette_id</code></td><td>BIGINT, FK</td><td>La version parente</td></tr>
+<tr><td><code>ordre</code></td><td>INT</td><td>L&#x27;ordre des lignes dans l&#x27;écriture</td></tr>
+<tr><td><code>rubrique_code</code></td><td>VARCHAR, FK</td><td>Quelle ligne écrire. <b>Pas de compte ici</b> : il vient du mapping</td></tr>
+<tr><td><code>sens</code></td><td>D / C</td><td>Débit (où va la valeur) ou crédit (d&#x27;où elle part)</td></tr>
+<tr><td><code>montant_source</code></td><td>VARCHAR</td><td>Le nom du montant à lire dans l&#x27;événement. Ex. <code>nominal</code>. Le moteur ne calcule rien</td></tr>
+<tr><td><code>ignorer_si_zero</code></td><td>BOOLEAN</td><td>Ligne facultative : pas de frais, pas de ligne de frais</td></tr>
+</tbody></table>
+<h2 id="b-critures-package-ecriture">B. Écritures (package <code>ecriture</code>)</h2>
+<h3 id="evenement-recu-ce-que-l-application-source-a-envoy"><code>evenement_recu</code> : ce que l&#x27;application source a envoyé</h3>
+<table><thead><tr><th>Colonne</th><th>Type</th><th>Pourquoi</th></tr></thead><tbody>
+<tr><td><code>id</code></td><td>BIGINT, clé</td><td>Identifiant technique</td></tr>
+<tr><td><code>source</code></td><td>VARCHAR</td><td>Qui envoie. Ex. <code>SIGAP</code></td></tr>
+<tr><td><code>event_id</code></td><td>VARCHAR</td><td>L&#x27;identifiant donné par la source. <b>(<code>source</code>, <code>event_id</code>) unique</b> : le même événement ne crée qu&#x27;une écriture</td></tr>
+<tr><td><code>evenement_code</code></td><td>VARCHAR</td><td>Le type d&#x27;événement</td></tr>
+<tr><td><code>payload</code></td><td>TEXT</td><td>Le contenu reçu, gardé tel quel : preuve et rejeu</td></tr>
+<tr><td><code>hash</code></td><td>CHAR(64)</td><td>Empreinte SHA-256 du contenu. Même identifiant mais empreinte différente = collision, refusée sans rien écraser</td></tr>
+<tr><td><code>recu_le</code></td><td>TIMESTAMP</td><td>Heure de réception</td></tr>
+</tbody></table>
+<h3 id="ecriture-l-en-t-te"><code>ecriture</code> : l&#x27;en-tête</h3>
+<table><thead><tr><th>Colonne</th><th>Type</th><th>Pourquoi</th></tr></thead><tbody>
+<tr><td><code>id</code></td><td>BIGINT, clé</td><td>Identifiant technique</td></tr>
+<tr><td><code>evenement_recu_id</code></td><td>BIGINT, FK</td><td>Remonter à l&#x27;événement d&#x27;origine</td></tr>
+<tr><td><code>evenement_code</code></td><td>VARCHAR</td><td>Lire l&#x27;écriture sans jointure</td></tr>
+<tr><td><code>recette_id</code>, <code>recette_version</code></td><td>BIGINT, INT</td><td><b>La version de recette utilisée</b>, figée : une recette changée plus tard ne touche pas cette écriture</td></tr>
+<tr><td><code>journal_code</code></td><td>VARCHAR</td><td>Le journal, repris de l&#x27;événement</td></tr>
+<tr><td><code>exercice</code></td><td>INT</td><td>L&#x27;année comptable. La numérotation repart à 1 chaque exercice</td></tr>
+<tr><td><code>numero</code></td><td>VARCHAR</td><td>Ex. <code>PLA-2026-0001</code>. Attribué à la validation, sans trou. Vide tant que l&#x27;écriture est proposée</td></tr>
+<tr><td><code>date_valeur</code></td><td>DATE</td><td>La date de l&#x27;opération, qui choisit la version de recette en vigueur</td></tr>
+<tr><td><code>date_reglement</code></td><td>DATE</td><td>La date du paiement, qui peut être différente</td></tr>
+<tr><td><code>libelle</code></td><td>VARCHAR</td><td>Le texte de l&#x27;écriture</td></tr>
+<tr><td><code>statut</code></td><td>PROPOSEE / VALIDEE / ANNULEE</td><td>Validée = figée</td></tr>
+<tr><td><code>created_by</code>, <code>created_at</code></td><td>VARCHAR, TIMESTAMP</td><td>Qui a préparé l&#x27;écriture</td></tr>
+<tr><td><code>validated_by</code>, <code>validated_at</code></td><td>VARCHAR, TIMESTAMP</td><td>Qui a validé. <b>Différent du créateur</b> (règle des 4 yeux)</td></tr>
+</tbody></table>
+<h3 id="ecriture-ligne-une-ligne-de-l-criture"><code>ecriture_ligne</code> : une ligne de l&#x27;écriture</h3>
+<table><thead><tr><th>Colonne</th><th>Type</th><th>Pourquoi</th></tr></thead><tbody>
+<tr><td><code>id</code></td><td>BIGINT, clé</td><td>Identifiant technique</td></tr>
+<tr><td><code>ecriture_id</code></td><td>BIGINT, FK</td><td>L&#x27;écriture parente</td></tr>
+<tr><td><code>ordre</code></td><td>INT</td><td>L&#x27;ordre d&#x27;affichage</td></tr>
+<tr><td><code>rubrique_code</code></td><td>VARCHAR</td><td>La rubrique de la recette</td></tr>
+<tr><td><code>compte_code</code></td><td>VARCHAR</td><td><b>Recopié</b> au moment de la génération : un mapping changé demain ne modifie pas l&#x27;écriture d&#x27;hier</td></tr>
+<tr><td><code>sens</code></td><td>D / C</td><td>Débit ou crédit</td></tr>
+<tr><td><code>montant</code></td><td>NUMERIC(20,2)</td><td>Décimal exact. Jamais de nombre à virgule flottante pour de l&#x27;argent</td></tr>
+<tr><td><code>devise</code></td><td>CHAR(3)</td><td>Ex. <code>XOF</code></td></tr>
+<tr><td><code>reference_titre</code></td><td>VARCHAR</td><td>Le titre concerné, pour la balance titre par titre</td></tr>
+</tbody></table>
+<p>Règle : sur chaque écriture, total des débits = total des crédits, avec au moins une ligne de chaque côté.</p>
+<h3 id="journal-compteur-la-num-rotation-sans-trou"><code>journal_compteur</code> : la numérotation sans trou</h3>
+<table><thead><tr><th>Colonne</th><th>Type</th><th>Pourquoi</th></tr></thead><tbody>
+<tr><td><code>journal_code</code>, <code>exercice</code></td><td>clé</td><td>Un compteur par journal et par année</td></tr>
+<tr><td><code>dernier_numero</code></td><td>BIGINT</td><td>Le dernier numéro donné</td></tr>
+</tbody></table>
+<p>Pourquoi une table plutôt qu&#x27;une séquence de base : une séquence saute des numéros quand une transaction échoue. Ici, la ligne est verrouillée (<code>SELECT … FOR UPDATE</code>) pendant la validation, puis augmentée de 1 dans la même transaction : ni trou, ni doublon.</p>
+</main>
+</body>
+</html>

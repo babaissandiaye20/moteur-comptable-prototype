@@ -1,0 +1,35 @@
+# Blueprint Render : le back (Docker) + un cron qui l'appelle toutes les 10 minutes pour éviter la veille.
+# Les secrets (sync: false) se saisissent dans le tableau de bord Render, jamais dans ce fichier.
+services:
+  - type: web
+    name: moteur-comptable-back
+    runtime: docker
+    plan: free
+    healthCheckPath: /api/sante
+    envVars:
+      - key: SPRING_DATASOURCE_URL
+        sync: false
+      - key: SPRING_DATASOURCE_USERNAME
+        sync: false
+      - key: SPRING_DATASOURCE_PASSWORD
+        sync: false
+      - key: MOTEUR_CORS_ORIGINES
+        value: "https://*.vercel.app,http://localhost:*,http://127.0.0.1:*"
+      - key: MOTEUR_DONNEES_DEMO
+        value: "false"
+
+  # Cron de réveil. Attention : les cron jobs Render sont payants (plan starter).
+  # Alternative gratuite déjà prête : .github/workflows/reveil-render.yml (variable GitHub BACK_URL).
+  - type: cron
+    name: moteur-comptable-reveil
+    runtime: python
+    plan: starter
+    schedule: "*/10 * * * *"
+    buildCommand: "echo rien a construire"
+    startCommand: 'curl -fsS --max-time 60 "https://$BACK_HOST/api/sante"'
+    envVars:
+      - key: BACK_HOST
+        fromService:
+          type: web
+          name: moteur-comptable-back
+          property: host

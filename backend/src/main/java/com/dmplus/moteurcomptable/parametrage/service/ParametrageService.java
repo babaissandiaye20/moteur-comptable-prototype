@@ -56,6 +56,10 @@ public class ParametrageService {
 
     public Operation creerOperation(String code, String libelle) {
         String c = code(code);
+        if (operations.existeSupprime(c)) {
+            operations.restaurer(c); // supprimé puis recréé : on le restaure
+            return operations.findById(c).orElseThrow();
+        }
         if (operations.existsById(c)) {
             throw dejaExistant("L'opération", c);
         }
@@ -64,6 +68,10 @@ public class ParametrageService {
 
     public Journal creerJournal(String code, String libelle, String codeExterne) {
         String c = code(code);
+        if (journaux.existeSupprime(c)) {
+            journaux.restaurer(c); // supprimé puis recréé : on le restaure
+            return journaux.findById(c).orElseThrow();
+        }
         if (journaux.existsById(c)) {
             throw dejaExistant("Le journal", c);
         }
@@ -73,6 +81,10 @@ public class ParametrageService {
     /** Un événement appartient à UNE seule opération et va dans UN journal, tous deux existants. */
     public Evenement creerEvenement(String code, String libelle, String operationCode, String journalCode) {
         String c = code(code);
+        if (evenements.existeSupprime(c)) {
+            evenements.restaurer(c); // supprimé puis recréé : on le restaure
+            return evenements.findById(c).orElseThrow();
+        }
         if (evenements.existsById(c)) {
             throw dejaExistant("L'événement", c);
         }
@@ -89,6 +101,10 @@ public class ParametrageService {
 
     public Rubrique creerRubrique(String code, String libelle, Nature nature) {
         String c = code(code);
+        if (rubriques.existeSupprime(c)) {
+            rubriques.restaurer(c); // supprimé puis recréé : on le restaure
+            return rubriques.findById(c).orElseThrow();
+        }
         if (nature == null) {
             throw new MoteurException("NATURE_REQUISE", "Indiquez la nature : ACTIF, CHARGE, PASSIF ou PRODUIT");
         }
@@ -100,6 +116,10 @@ public class ParametrageService {
 
     public Compte creerCompte(String code, String libelle) {
         String c = code(code);
+        if (comptes.existeSupprime(c)) {
+            comptes.restaurer(c); // supprimé puis recréé : on le restaure
+            return comptes.findById(c).orElseThrow();
+        }
         if (comptes.existsById(c)) {
             throw dejaExistant("Le compte", c);
         }
@@ -164,44 +184,62 @@ public class ParametrageService {
         return recette;
     }
 
-    // ---------- Suppression douce : refusée tant que l'élément est utilisé ----------
+    // ---------- Suppression douce ----------
+    // Sans cascade : refusée si l'élément est utilisé, avec la liste de ce qui en dépend.
+    // Avec cascade : on supprime aussi ce qui en dépend. Les recettes publiées sont RETIRÉES, jamais effacées,
+    // car des écritures y font référence. Les écritures elles-mêmes ne sont jamais touchées.
 
-    public void supprimerOperation(String code) {
+    public void supprimerOperation(String code, boolean cascade) {
         Operation o = operations.findById(code).orElseThrow(() -> introuvable("L'opération", code));
-        if (evenements.existsByOperationCode(code)) {
-            throw new MoteurException("ELEMENT_UTILISE", "L'opération " + code + " est utilisée par un événement");
+        List<Evenement> dependants = evenements.findByOperationCode(code);
+        if (!dependants.isEmpty()) {
+            exigerCascade(cascade, "L'opération " + code, "les événements", codes(dependants.stream().map(Evenement::getCode).toList()));
+            dependants.forEach(e -> supprimerEvenement(e.getCode(), true));
         }
         o.supprimer();
     }
 
-    public void supprimerJournal(String code) {
+    public void supprimerJournal(String code, boolean cascade) {
         Journal j = journaux.findById(code).orElseThrow(() -> introuvable("Le journal", code));
-        if (evenements.existsByJournalCode(code)) {
-            throw new MoteurException("ELEMENT_UTILISE", "Le journal " + code + " est utilisé par un événement");
+        List<Evenement> dependants = evenements.findByJournalCode(code);
+        if (!dependants.isEmpty()) {
+            exigerCascade(cascade, "Le journal " + code, "les événements", codes(dependants.stream().map(Evenement::getCode).toList()));
+            dependants.forEach(e -> supprimerEvenement(e.getCode(), true));
         }
         j.supprimer();
     }
 
-    public void supprimerEvenement(String code) {
+    public void supprimerEvenement(String code, boolean cascade) {
         Evenement e = evenements.findById(code).orElseThrow(() -> introuvable("L'événement", code));
-        if (recettes.existsByEvenementCodeAndStatut(code, StatutRecette.PUBLIEE)) {
-            throw new MoteurException("ELEMENT_UTILISE", "L'événement " + code + " a une recette publiée : retirez-la d'abord");
+        List<Recette> actives = recettes.findByEvenementCode(code).stream()
+                .filter(r -> r.getStatut() != StatutRecette.RETIREE).toList();
+        if (!actives.isEmpty()) {
+            exigerCascade(cascade, "L'événement " + code, "ses recettes", "version " + codes(actives.stream().map(r -> String.valueOf(r.getVersion())).toList()));
+            actives.forEach(Recette::retirer);
         }
         e.supprimer();
     }
 
-    public void supprimerRubrique(String code) {
+    public void supprimerRubrique(String code, boolean cascade) {
         Rubrique r = rubriques.findById(code).orElseThrow(() -> introuvable("La rubrique", code));
-        if (mappings.existsByRubriqueCode(code) || recettes.rubriqueUtiliseeDansUneRecette(code, StatutRecette.RETIREE)) {
-            throw new MoteurException("ELEMENT_UTILISE", "La rubrique " + code + " est utilisée par un mapping ou une recette");
+        List<Mapping> lignes = mappings.findByRubriqueCode(code);
+        List<Recette> utilisatrices = recettes.recettesUtilisantLaRubrique(code, StatutRecette.RETIREE);
+        if (!lignes.isEmpty() || !utilisatrices.isEmpty()) {
+            exigerCascade(cascade, "La rubrique " + code, "ce qui l'utilise",
+                    lignes.size() + " ligne(s) de mapping et " + utilisatrices.size() + " recette(s)");
+            lignes.forEach(Mapping::supprimer);
+            utilisatrices.forEach(Recette::retirer);
         }
         r.supprimer();
     }
 
-    public void supprimerCompte(String code) {
+    public void supprimerCompte(String code, boolean cascade) {
         Compte c = comptes.findById(code).orElseThrow(() -> introuvable("Le compte", code));
-        if (mappings.existsByCompteCode(code)) {
-            throw new MoteurException("ELEMENT_UTILISE", "Le compte " + code + " est utilisé par le mapping");
+        List<Mapping> lignes = mappings.findByCompteCode(code);
+        if (!lignes.isEmpty()) {
+            exigerCascade(cascade, "Le compte " + code, "les lignes de mapping",
+                    codes(lignes.stream().map(m -> m.getRubriqueCode() + "/" + m.getClasseActif() + "/" + m.getCategorie()).toList()));
+            lignes.forEach(Mapping::supprimer);
         }
         c.supprimer();
     }
@@ -215,6 +253,28 @@ public class ParametrageService {
         Recette r = recettes.findById(id).orElseThrow(() -> introuvable("La recette", String.valueOf(id)));
         r.retirer();
         return r;
+    }
+
+    /** Un brouillon n'a jamais servi : on l'efface. Une recette publiée est retirée (des écritures la référencent). */
+    public void supprimerRecette(Long id) {
+        Recette r = recettes.findById(id).orElseThrow(() -> introuvable("La recette", String.valueOf(id)));
+        if (r.getStatut() == StatutRecette.BROUILLON) {
+            recettes.delete(r);
+        } else {
+            r.retirer();
+        }
+    }
+
+    private static void exigerCascade(boolean cascade, String quoi, String dependants, String liste) {
+        if (!cascade) {
+            throw new MoteurException("ELEMENT_UTILISE",
+                    quoi + " est utilisé par " + dependants + " : " + liste
+                            + ". Supprimez-les d'abord, ou choisissez « Supprimer aussi ce qui en dépend ».");
+        }
+    }
+
+    private static String codes(List<String> liste) {
+        return String.join(", ", liste);
     }
 
     private static MoteurException introuvable(String quoi, String code) {

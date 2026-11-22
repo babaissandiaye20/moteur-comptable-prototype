@@ -1,0 +1,13 @@
+server {
+    listen       ${PORT};
+    server_name  _;
+    root   /usr/share/nginx/html;
+    index  index.html;
+
+    # config.js change à chaque déploiement : jamais en cache
+    location = /config.js { add_header Cache-Control "no-store"; }
+    location / { try_files $uri $uri/ /index.html; }
+
+    add_header X-Content-Type-Options nosniff always;
+    add_header Referrer-Policy strict-origin-when-cross-origin always;
+}

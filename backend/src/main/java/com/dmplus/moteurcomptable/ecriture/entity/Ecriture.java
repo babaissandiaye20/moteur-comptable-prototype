@@ -57,6 +57,10 @@ public class Ecriture {
     private String validatedBy;
     @Column(name = "validated_at")
     private LocalDateTime validatedAt;
+    @Column(name = "annulee_par")
+    private String annuleePar;
+    @Column(name = "annulee_le")
+    private LocalDateTime annuleeLe;
 
     @OneToMany(mappedBy = "ecriture", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     @OrderBy("ordre")
@@ -85,6 +89,20 @@ public class Ecriture {
     public void ajouterLigne(EcritureLigne ligne) {
         ligne.rattacher(this);
         lignes.add(ligne);
+    }
+
+    /**
+     * Annuler une écriture encore à valider : elle reste en base (traçabilité) avec le statut ANNULEE.
+     * Une écriture validée ne s'annule pas : elle se corrige par une écriture inverse.
+     */
+    public void annuler(String utilisateur) {
+        if (!statut.peutPasserA(StatutEcriture.ANNULEE)) {
+            throw new MoteurException("STATUT_INVALIDE",
+                    "Une écriture " + statut + " ne peut pas être annulée : une écriture validée se corrige par une écriture inverse");
+        }
+        this.statut = StatutEcriture.ANNULEE;
+        this.annuleePar = utilisateur;
+        this.annuleeLe = LocalDateTime.now();
     }
 
     /** Vérifie qu'on peut valider, AVANT de consommer un numéro. */
@@ -132,5 +150,6 @@ public class Ecriture {
     public String getCreatedBy() { return createdBy; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public String getValidatedBy() { return validatedBy; }
+    public String getAnnuleePar() { return annuleePar; }
     public List<EcritureLigne> getLignes() { return lignes; }
 }

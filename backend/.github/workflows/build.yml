@@ -1,0 +1,20 @@
+# Build GitHub : compile, lance les tests et construit l'image Docker à chaque push.
+name: Build du back
+on:
+  push:
+    branches: [main]
+  pull_request:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+      - name: Compiler et tester
+        run: mvn -B verify
+      - name: Construire l'image Docker (multi-étapes)
+        run: docker build -t moteur-comptable-back:${{ github.sha }} .

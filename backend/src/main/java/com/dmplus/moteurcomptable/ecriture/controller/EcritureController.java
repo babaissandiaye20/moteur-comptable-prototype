@@ -45,6 +45,12 @@ public class EcritureController {
         return service.detail(id);
     }
 
+    /** Annule une écriture encore à valider. Elle reste visible avec le statut « Annulée ». */
+    @PostMapping("/ecritures/{id}/annuler")
+    public EcritureDto annuler(@PathVariable Long id, @RequestBody UtilisateurDto d) {
+        return service.annuler(id, d.utilisateur());
+    }
+
     @PostMapping("/ecritures/{id}/valider")
     public EcritureDto valider(@PathVariable Long id, @RequestBody UtilisateurDto d) {
         return service.valider(id, d.utilisateur());

@@ -10,5 +10,6 @@ public interface MappingRepository extends JpaRepository<Mapping, Long> {
     List<Mapping> findByRubriqueCode(String rubriqueCode);
     boolean existsByRubriqueCode(String rubriqueCode);
     boolean existsByCompteCode(String compteCode);
+    List<Mapping> findByCompteCode(String compteCode);
     boolean existsByRubriqueCodeAndClasseActifAndCategorie(String rubriqueCode, String classeActif, String categorie);
 }

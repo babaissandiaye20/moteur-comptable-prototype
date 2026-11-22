@@ -12,7 +12,7 @@ import java.util.List;
 public record EcritureDto(Long id, String numero, String journal, int exercice, String evenement,
                           Long recetteId, int recetteVersion, LocalDate dateValeur, LocalDate dateReglement,
                           String libelle, String statut, String creePar, LocalDateTime creeLe,
-                          String valideePar, BigDecimal totalDebit, BigDecimal totalCredit,
+                          String valideePar, String annuleePar, BigDecimal totalDebit, BigDecimal totalCredit,
                           boolean equilibree, List<LigneDto> lignes) {
 
     public static EcritureDto de(Ecriture e) {
@@ -20,7 +20,7 @@ public record EcritureDto(Long id, String numero, String journal, int exercice, 
         BigDecimal credit = total(e.getLignes(), Sens.C);
         return new EcritureDto(e.getId(), e.getNumero(), e.getJournalCode(), e.getExercice(), e.getEvenementCode(),
                 e.getRecetteId(), e.getRecetteVersion(), e.getDateValeur(), e.getDateReglement(), e.getLibelle(),
-                e.getStatut().name(), e.getCreatedBy(), e.getCreatedAt(), e.getValidatedBy(),
+                e.getStatut().name(), e.getCreatedBy(), e.getCreatedAt(), e.getValidatedBy(), e.getAnnuleePar(),
                 debit, credit, debit.compareTo(credit) == 0,
                 e.getLignes().stream().map(LigneDto::de).toList());
     }

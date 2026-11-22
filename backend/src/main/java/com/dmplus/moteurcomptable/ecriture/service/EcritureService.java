@@ -122,6 +122,12 @@ public class EcritureService {
         return EcritureDto.de(ecriture);
     }
 
+    public EcritureDto annuler(Long id, String utilisateur) {
+        Ecriture ecriture = trouver(id);
+        ecriture.annuler(utilisateur == null || utilisateur.isBlank() ? "inconnu" : utilisateur);
+        return EcritureDto.de(ecriture);
+    }
+
     @Transactional(readOnly = true)
     public List<EcritureDto> lister() {
         return ecritures.findAllByOrderByIdDesc().stream().map(EcritureDto::de).toList();

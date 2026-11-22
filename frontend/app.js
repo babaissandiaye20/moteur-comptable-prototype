@@ -29,7 +29,11 @@ async function api(chemin, options = {}) {
   }
   if (rep.status === 204) return null;
   const corps = await rep.json().catch(() => null);
-  if (!rep.ok) throw new Error(corps?.message || `Le serveur a répondu ${rep.status}.`);
+  if (!rep.ok) {
+    const erreur = new Error(corps?.message || `Le serveur a répondu ${rep.status}.`);
+    erreur.code = corps?.code;
+    throw erreur;
+  }
   return corps;
 }
 const post = (chemin, corps) => api(chemin, { method: "POST", body: JSON.stringify(corps ?? {}) });
@@ -106,11 +110,19 @@ function remplirListes() {
   });
 }
 
+// Suppression : directe si l'élément est libre ; sinon le moteur dit ce qui en dépend,
+// et l'on propose de supprimer aussi ces éléments (cascade).
 function effacer(chemin, nom) {
   return el("button", { type: "button", class: "effacer", "aria-label": `Supprimer ${nom}`, onclick: async () => {
-    if (!confirm(`Supprimer ${nom} ? L'élément disparaît des listes mais reste dans l'historique.`)) return;
-    try { await api(chemin, { method: "DELETE" }); message(`${nom[0].toUpperCase() + nom.slice(1)} supprimé.`); await chargerParametrage(); }
-    catch (e) { message(e.message, false); }
+    if (!confirm(`Supprimer ${nom} ?`)) return;
+    const fait = () => { message(`${nom[0].toUpperCase() + nom.slice(1)} : supprimé.`); return chargerParametrage(); };
+    try { await api(chemin, { method: "DELETE" }); await fait(); }
+    catch (e) {
+      if (e.code !== "ELEMENT_UTILISE") { message(e.message, false); return; }
+      if (!confirm(`${e.message}\n\nSupprimer aussi ce qui en dépend ? Les écritures déjà créées ne sont pas touchées.`)) return;
+      try { await api(chemin + "?cascade=true", { method: "DELETE" }); await fait(); }
+      catch (e2) { message(e2.message, false); }
+    }
   } }, "Supprimer");
 }
 
@@ -151,7 +163,11 @@ function afficherRecettes() {
     const actions = [];
     if (r.statut === "BROUILLON") actions.push(el("button", { type: "button", class: "lien", onclick: async () => {
       try { await post(`/api/parametrage/recettes/${r.id}/publier`, { utilisateur: utilisateur() }); message("Recette publiée."); await chargerParametrage(); }
-      catch (e) { message(e.message, false); } } }, "Publier"));
+      catch (e) { message(e.message, false); } } }, "Publier"),
+      el("button", { type: "button", class: "effacer", onclick: async () => {
+        if (!confirm("Supprimer ce brouillon de recette ?")) return;
+        try { await api(`/api/parametrage/recettes/${r.id}`, { method: "DELETE" }); message("Brouillon supprimé."); await chargerParametrage(); }
+        catch (e) { message(e.message, false); } } }, "Supprimer"));
     if (r.statut === "PUBLIEE") actions.push(el("button", { type: "button", class: "effacer", onclick: async () => {
       if (!confirm("Retirer cette recette ? Elle ne servira plus aux nouveaux événements. Les écritures déjà créées la gardent.")) return;
       try { await post(`/api/parametrage/recettes/${r.id}/retirer`); message("Recette retirée."); await chargerParametrage(); }
@@ -344,6 +360,15 @@ function afficherPiece(e, conteneur) {
     actions.append(el("p", {}, e.creePar === utilisateur()
       ? "Vous avez créé cette écriture. Passez en « Comptable » en haut de la page pour la valider."
       : "Valider donne un numéro à l'écriture et la fige."));
+    actions.append(el("button", { type: "button", class: "secondaire", onclick: async () => {
+      if (!confirm("Annuler cette écriture ? Elle restera visible avec le statut « Annulée ».")) return;
+      try {
+        const a = await post(`/api/ecritures/${e.id}/annuler`, { utilisateur: utilisateur() });
+        message("Écriture annulée.");
+        afficherPiece(a, conteneur);
+        if (!$("#ecritures").hidden) chargerEcritures(a.id);
+      } catch (err) { message(err.message, false); }
+    } }, "Annuler l'écriture"));
     actions.append(el("button", { type: "button", onclick: async () => {
       try {
         const v = await post(`/api/ecritures/${e.id}/valider`, { utilisateur: utilisateur() });
@@ -352,6 +377,8 @@ function afficherPiece(e, conteneur) {
         if (!$("#ecritures").hidden) chargerEcritures(v.id);
       } catch (err) { message(err.message, false); }
     } }, "Valider l'écriture"));
+  } else if (e.statut === "ANNULEE") {
+    actions.append(el("p", {}, `Annulée${e.annuleePar ? " par " + e.annuleePar : ""}. Elle reste visible pour la traçabilité et ne compte plus.`));
   } else if (e.statut === "VALIDEE") {
     actions.append(el("p", {}, "Validée : elle ne changera plus. Une erreur se corrige par une écriture inverse."));
   }

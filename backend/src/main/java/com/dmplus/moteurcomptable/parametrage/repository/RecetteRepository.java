@@ -22,6 +22,11 @@ public interface RecetteRepository extends JpaRepository<Recette, Long> {
 
     boolean existsByEvenementCodeAndStatut(String evenementCode, StatutRecette statut);
 
+    List<Recette> findByEvenementCode(String evenementCode);
+
+    @Query("select distinct l.recette from RecetteLigne l where l.rubriqueCode = :rubrique and l.recette.statut <> :retiree")
+    List<Recette> recettesUtilisantLaRubrique(String rubrique, StatutRecette retiree);
+
     @Query("select count(l) > 0 from RecetteLigne l where l.rubriqueCode = :rubrique and l.recette.statut <> :retiree")
     boolean rubriqueUtiliseeDansUneRecette(String rubrique, StatutRecette retiree);
 }
