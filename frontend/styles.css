@@ -208,3 +208,54 @@ legend{font-weight:600;padding:0 8px 0 0}
 .grille-retours th:nth-child(4),.grille-retours td:nth-child(4){width:36%}
 .grille-retours textarea{min-height:64px}
 .reveil{margin:0 0 16px;padding:12px 16px;border-left:4px solid var(--attente);background:#fffaf0;font-size:14px}
+
+/* ---------- Téléphone et petite tablette ---------- */
+.sous-plan button em{margin-left:6px}
+@media (max-width:760px){
+  html,body{overflow-x:hidden}
+  .barre .role{white-space:normal;flex-wrap:wrap}
+  .role select{max-width:100%}
+  /* Les listes de paramétrage défilent dans leur cadre, pas la page */
+  main table:not(.grille-retours):not(.saisie){display:block;overflow-x:auto;-webkit-overflow-scrolling:touch}
+  main td,main th{padding-left:8px;padding-right:8px}
+  .ajout label,.ajout label.large{flex:1 1 100%}
+  .ajout button,.filtres button{width:100%;margin-left:0}
+  .paire{grid-template-columns:1fr}
+
+  /* Lignes d'une règle d'événement : une carte par ligne */
+  table.saisie thead{display:none}
+  table.saisie,table.saisie tbody{display:block}
+  table.saisie tr{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:12px 0;border-bottom:1px solid var(--regle)}
+  table.saisie td{display:block;padding:0;border:0}
+  table.saisie td:first-child,table.saisie td:nth-child(2),table.saisie td:nth-child(3){grid-column:1 / -1}
+  table.saisie select,table.saisie input:not([type=checkbox]){width:100%}
+  .pied{flex-wrap:wrap}
+  .pied button{width:100%}
+
+  .bilan{gap:20px}
+
+  .page{min-height:0;align-content:start}
+  .plan{align-content:flex-start;align-items:center}
+  table.saisie td:nth-child(2) select{width:100%!important}
+  table.saisie td:nth-child(4) input{width:auto;margin:0}
+  table.saisie td:nth-child(4){display:flex;align-items:center;gap:8px;font-size:14px;color:var(--doux)}
+  table.saisie td:nth-child(4)::after{content:"Facultative"}
+  table.saisie td:nth-child(5){text-align:right;align-self:center}
+  main table:not(.grille-retours):not(.saisie)::after{content:""}
+
+  /* Pièce comptable : chiffres lisibles */
+  .piece th,.piece td{padding-left:12px;padding-right:12px}
+  .piece td.col-debit,.piece td.col-credit{font-size:14px}
+  .piece-actions button{width:100%}
+}
+
+/* Grille de retours : une carte par point, dès la tablette */
+@media (max-width:1000px){
+  .grille-retours thead{display:none}
+  .grille-retours,.grille-retours tbody{display:block}
+  .grille-retours tr{display:grid;grid-template-columns:auto 1fr;gap:8px 12px;padding:14px 10px;border-bottom:1px solid var(--regle)}
+  .grille-retours td{display:block;padding:0;border:0;width:auto!important}
+  .grille-retours td:nth-child(3),.grille-retours td:nth-child(4),.grille-retours td:nth-child(5){grid-column:2 / -1}
+  .grille-retours select{width:100%;max-width:320px}
+  .grille-retours td:nth-child(5):empty{display:none}
+}

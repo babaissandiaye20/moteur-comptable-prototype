@@ -152,7 +152,7 @@ public class ParametrageService {
             throw new MoteurException("EVENEMENT_INCONNU", "L'événement « " + evenementCode + " » n'existe pas");
         }
         if (lignes == null || lignes.size() < 2) {
-            throw new MoteurException("RECETTE_INCOMPLETE", "Une recette a besoin d'au moins deux lignes");
+            throw new MoteurException("RECETTE_INCOMPLETE", "Une règle d'événement a besoin d'au moins deux lignes");
         }
         int version = recettes.findFirstByEvenementCodeOrderByVersionDesc(evenementCode)
                 .map(r -> r.getVersion() + 1).orElse(1);
@@ -179,7 +179,7 @@ public class ParametrageService {
 
     public Recette publierRecette(Long id, String utilisateur) {
         Recette recette = recettes.findById(id)
-                .orElseThrow(() -> new MoteurException("RECETTE_INCONNUE", "Recette " + id + " introuvable"));
+                .orElseThrow(() -> new MoteurException("RECETTE_INCONNUE", "Règle " + id + " introuvable"));
         recette.publier(utilisateur);
         return recette;
     }
@@ -214,7 +214,7 @@ public class ParametrageService {
         List<Recette> actives = recettes.findByEvenementCode(code).stream()
                 .filter(r -> r.getStatut() != StatutRecette.RETIREE).toList();
         if (!actives.isEmpty()) {
-            exigerCascade(cascade, "L'événement " + code, "ses recettes", "version " + codes(actives.stream().map(r -> String.valueOf(r.getVersion())).toList()));
+            exigerCascade(cascade, "L'événement " + code, "ses règles", "version " + codes(actives.stream().map(r -> String.valueOf(r.getVersion())).toList()));
             actives.forEach(Recette::retirer);
         }
         e.supprimer();
@@ -226,7 +226,7 @@ public class ParametrageService {
         List<Recette> utilisatrices = recettes.recettesUtilisantLaRubrique(code, StatutRecette.RETIREE);
         if (!lignes.isEmpty() || !utilisatrices.isEmpty()) {
             exigerCascade(cascade, "La rubrique " + code, "ce qui l'utilise",
-                    lignes.size() + " ligne(s) de mapping et " + utilisatrices.size() + " recette(s)");
+                    lignes.size() + " ligne(s) de mapping et " + utilisatrices.size() + " règle(s) d'événement");
             lignes.forEach(Mapping::supprimer);
             utilisatrices.forEach(Recette::retirer);
         }
@@ -250,14 +250,14 @@ public class ParametrageService {
     }
 
     public Recette retirerRecette(Long id) {
-        Recette r = recettes.findById(id).orElseThrow(() -> introuvable("La recette", String.valueOf(id)));
+        Recette r = recettes.findById(id).orElseThrow(() -> introuvable("La règle", String.valueOf(id)));
         r.retirer();
         return r;
     }
 
     /** Un brouillon n'a jamais servi : on l'efface. Une recette publiée est retirée (des écritures la référencent). */
     public void supprimerRecette(Long id) {
-        Recette r = recettes.findById(id).orElseThrow(() -> introuvable("La recette", String.valueOf(id)));
+        Recette r = recettes.findById(id).orElseThrow(() -> introuvable("La règle", String.valueOf(id)));
         if (r.getStatut() == StatutRecette.BROUILLON) {
             recettes.delete(r);
         } else {

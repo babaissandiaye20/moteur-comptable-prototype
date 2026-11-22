@@ -33,7 +33,7 @@
       <li><button data-param="rubriques">Rubriques <em id="n-rubriques">0</em></button></li>
       <li><button data-param="comptes">Comptes <em id="n-comptes">0</em></button></li>
       <li><button data-param="mappings">Mapping <em id="n-mappings">0</em></button></li>
-      <li><button data-param="recettes">Recettes <em id="n-recettes">0</em></button></li>
+      <li><button data-param="recettes">Règles d'événement <em id="n-recettes">0</em></button></li>
     </ol>
     <button class="etape" data-etape="generer"><span class="num">2</span>Générer une écriture</button>
     <button class="etape" data-etape="ecritures"><span class="num">3</span>Valider les écritures</button>
@@ -126,8 +126,8 @@
       </div>
 
       <div class="bloc" data-bloc="recettes" hidden>
-        <h1>Recettes</h1>
-        <p class="phrase">Les lignes à écrire pour un événement. Une recette publiée ne change plus : pour la modifier, enregistrez une nouvelle version. Les écritures déjà créées gardent la leur.</p>
+        <h1>Règles d'événement</h1>
+        <p class="phrase">Pour un événement : les lignes à écrire, leur côté et le montant à prendre. Une règle publiée ne change plus : pour la modifier, enregistrez une nouvelle version. Les écritures déjà créées gardent la leur.</p>
         <form id="f-recettes" class="recette-saisie">
           <div class="ajout">
             <label class="large">Événement<select name="evenementCode" data-liste="evenements" required></select></label>
@@ -141,7 +141,7 @@
           <div class="pied">
             <button type="button" id="ajouter-ligne" class="secondaire">Ajouter une ligne</button>
             <label class="case"><input type="checkbox" name="publier" checked> Publier tout de suite</label>
-            <button>Enregistrer la recette</button>
+            <button>Enregistrer la règle</button>
           </div>
         </form>
         <div id="t-recettes"></div>
@@ -207,7 +207,7 @@
         <tbody id="t-retours"></tbody>
       </table>
       <form id="f-retour" class="ajout">
-        <label>Fonctionnalité<input name="fonctionnalite" placeholder="Recettes"></label>
+        <label>Fonctionnalité<input name="fonctionnalite" placeholder="Règles d'événement"></label>
         <label class="large">Point à ajouter<input name="critere" placeholder="Ce qui manque ou ce qu'il faudrait vérifier" required></label>
         <button>Ajouter le point</button>
       </form>

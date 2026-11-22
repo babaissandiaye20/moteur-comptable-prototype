@@ -159,19 +159,19 @@ function afficherListes() {
 
 function afficherRecettes() {
   const zone = $("#t-recettes");
-  if (!param.recettes.length) { zone.replaceChildren(el("p", { class: "vide" }, "Aucune recette. Sans recette, un événement ne produit pas d'écriture.")); return; }
+  if (!param.recettes.length) { zone.replaceChildren(el("p", { class: "vide" }, "Aucune règle d'événement. Sans règle, un événement ne produit pas d'écriture.")); return; }
   zone.replaceChildren(...[...param.recettes].reverse().map((r) => {
     const actions = [];
     if (r.statut === "BROUILLON") actions.push(el("button", { type: "button", class: "lien", onclick: async () => {
-      try { await post(`/api/parametrage/recettes/${r.id}/publier`, { utilisateur: utilisateur() }); message("Recette publiée."); await chargerParametrage(); }
+      try { await post(`/api/parametrage/recettes/${r.id}/publier`, { utilisateur: utilisateur() }); message("Règle publiée."); await chargerParametrage(); }
       catch (e) { message(e.message, false); } } }, "Publier"),
       el("button", { type: "button", class: "effacer", onclick: async () => {
-        if (!confirm("Supprimer ce brouillon de recette ?")) return;
+        if (!confirm("Supprimer ce brouillon de règle ?")) return;
         try { await api(`/api/parametrage/recettes/${r.id}`, { method: "DELETE" }); message("Brouillon supprimé."); await chargerParametrage(); }
         catch (e) { message(e.message, false); } } }, "Supprimer"));
     if (r.statut === "PUBLIEE") actions.push(el("button", { type: "button", class: "effacer", onclick: async () => {
-      if (!confirm("Retirer cette recette ? Elle ne servira plus aux nouveaux événements. Les écritures déjà créées la gardent.")) return;
-      try { await post(`/api/parametrage/recettes/${r.id}/retirer`); message("Recette retirée."); await chargerParametrage(); }
+      if (!confirm("Retirer cette règle ? Elle ne servira plus aux nouveaux événements. Les écritures déjà créées la gardent.")) return;
+      try { await post(`/api/parametrage/recettes/${r.id}/retirer`); message("Règle retirée."); await chargerParametrage(); }
       catch (e) { message(e.message, false); } } }, "Retirer"));
     return el("div", { class: "recette" },
       el("h2", {}, `${evenement(r.evenementCode)}, version ${r.version}`, statut(r.statut), ...actions),
@@ -224,7 +224,7 @@ function controleRecette() {
   const ok = l.some((x) => x.sens === "D") && l.some((x) => x.sens === "C");
   const p = $("#apercu-recette");
   p.className = "controle " + (ok ? "ok" : "ko");
-  p.textContent = ok ? "La recette a au moins une ligne au débit et une au crédit." : "Il manque une ligne au débit ou au crédit.";
+  p.textContent = ok ? "La règle a au moins une ligne au débit et une au crédit." : "Il manque une ligne au débit ou au crédit.";
 }
 $("#ajouter-ligne").onclick = () => ajouterLigneRecette();
 $("#f-recettes").onsubmit = async (ev) => {
@@ -233,7 +233,7 @@ $("#f-recettes").onsubmit = async (ev) => {
   try {
     const r = await post("/api/parametrage/recettes", { evenementCode: f.evenementCode.value, dateEffet: f.dateEffet.value || null,
       utilisateur: utilisateur(), publier: f.publier.checked, lignes: lignesSaisies() });
-    message(`Recette enregistrée en version ${r.version}.`);
+    message(`Règle enregistrée en version ${r.version}.`);
     $("#lignes-recette").replaceChildren();
     ajouterLigneRecette("D"); ajouterLigneRecette("C");
     await chargerParametrage();
@@ -263,7 +263,7 @@ function nouvelIdentifiant() { $("#g-eventId").value = `${$("#g-evenement").valu
 function champsMontants() {
   const zone = $("#g-montants");
   const r = recetteEnVigueur($("#g-evenement").value);
-  if (!r) { zone.replaceChildren(el("p", { class: "vide" }, "Aucun événement n'a de recette publiée. Créez-en une à l'étape 1.")); apercu(); return; }
+  if (!r) { zone.replaceChildren(el("p", { class: "vide" }, "Aucun événement n'a de règle publiée. Créez-en une à l'étape 1.")); apercu(); return; }
   const noms = new Map();
   r.lignes.forEach((l) => noms.set(l.montantSource, (noms.get(l.montantSource) ?? true) && l.ignorerSiZero));
   zone.replaceChildren(...[...noms].map(([nom, facultatif]) => el("label", {},
@@ -306,7 +306,7 @@ function apercu() {
   const totalC = lignes.reduce((s, l) => s + (l.credit || 0), 0);
   const rempli = Object.values(saisis).some((v) => v);
   zone.replaceChildren(piece({
-    apercu: true, numero: null, titre: "Aperçu de la pièce", info: `${evenement(code)} · recette version ${r.version}`,
+    apercu: true, numero: null, titre: "Aperçu de la pièce", info: `${evenement(code)} · règle version ${r.version}`,
     lignes, totalD, totalC,
     balance: !rempli ? ["neutre", "Saisissez les montants pour voir l'écriture se former.", ""]
       : Math.abs(totalD - totalC) < 0.005 ? ["ok", "Équilibrée : débit = crédit", `${montant(totalD)} = ${montant(totalC)}`]
@@ -386,7 +386,7 @@ function afficherPiece(e, conteneur) {
   conteneur.replaceChildren(piece({
     numero: e.numero, titre: "Pas encore numérotée",
     info: `${evenement(e.evenement)} · journal ${e.journal} · ${dateFr(e.dateValeur)}`,
-    info2: `Recette version ${e.recetteVersion} · créée par ${e.creePar}` + (e.valideePar ? ` · validée par ${e.valideePar}` : ""),
+    info2: `Règle version ${e.recetteVersion} · créée par ${e.creePar}` + (e.valideePar ? ` · validée par ${e.valideePar}` : ""),
     statutPiece: e.statut, totalD: e.totalDebit, totalC: e.totalCredit,
     lignes: e.lignes.map((l) => ({ rubrique: l.rubrique, compte: l.compte, debit: l.debit, credit: l.credit })),
     balance: e.equilibree ? ["ok", "Équilibrée : débit = crédit", `${montant(e.totalDebit)} = ${montant(e.totalCredit)} XOF`] : ["ko", "Déséquilibrée", ""],

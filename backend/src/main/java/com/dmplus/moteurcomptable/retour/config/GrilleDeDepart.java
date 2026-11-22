@@ -5,6 +5,7 @@ import com.dmplus.moteurcomptable.retour.repository.RetourRepository;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,17 +26,17 @@ public class GrilleDeDepart implements ApplicationRunner {
             new String[]{"Événements", "Paramétrer › Événements", "Créer un événement rattaché à une opération et à un journal"},
             new String[]{"Événements", "Paramétrer › Événements", "Un événement ne peut avoir qu'une seule opération"},
             new String[]{"Rubriques", "Paramétrer › Rubriques", "Créer une rubrique avec sa nature (actif, charge, passif, produit)"},
-            new String[]{"Rubriques", "Paramétrer › Rubriques", "Supprimer une rubrique utilisée par le mapping ou une recette : le message explique pourquoi"},
+            new String[]{"Rubriques", "Paramétrer › Rubriques", "Supprimer une rubrique utilisée par le mapping ou une règle d'événement : le message explique pourquoi"},
             new String[]{"Comptes", "Paramétrer › Comptes", "Créer un compte du plan de comptes"},
             new String[]{"Comptes", "Paramétrer › Comptes", "Supprimer un compte libre : il disparaît ; le recréer ensuite fonctionne"},
             new String[]{"Mapping", "Paramétrer › Mapping", "Associer rubrique + classe + catégorie à un compte"},
             new String[]{"Mapping", "Paramétrer › Mapping", "Une classe ou une catégorie laissée vide vaut « toutes »"},
             new String[]{"Mapping", "Générer une écriture", "Obligation d'État → compte 2745 ; obligation de société → compte 2746"},
-            new String[]{"Recettes", "Paramétrer › Recettes", "Créer et publier une recette avec au moins un débit et un crédit"},
-            new String[]{"Recettes", "Paramétrer › Recettes", "Publier une recette sans crédit (ou sans débit) : refusé"},
-            new String[]{"Recettes", "Paramétrer › Recettes", "Créer une nouvelle recette pour le même événement : version 2"},
-            new String[]{"Recettes", "Valider les écritures", "Une écriture créée avec la version 1 garde la version 1 après la publication de la version 2"},
-            new String[]{"Recettes", "Paramétrer › Recettes", "Supprimer un brouillon de recette ; retirer une recette publiée"},
+            new String[]{"Règles d'événement", "Paramétrer › Règles d'événement", "Créer et publier une règle avec au moins un débit et un crédit"},
+            new String[]{"Règles d'événement", "Paramétrer › Règles d'événement", "Publier une règle sans crédit (ou sans débit) : refusé"},
+            new String[]{"Règles d'événement", "Paramétrer › Règles d'événement", "Créer une nouvelle règle pour le même événement : version 2"},
+            new String[]{"Règles d'événement", "Valider les écritures", "Une écriture créée avec la version 1 garde la version 1 après la publication de la version 2"},
+            new String[]{"Règles d'événement", "Paramétrer › Règles d'événement", "Supprimer un brouillon de règle ; retirer une règle publiée"},
             new String[]{"Génération", "Générer une écriture", "L'aperçu de la pièce se remplit pendant la saisie et signale un déséquilibre"},
             new String[]{"Génération", "Générer une écriture", "Achat d'obligation (nominal 2 000 000, frais 20 000, total 2 020 000) : 2745 D 2 000 000 · 6311 D 20 000 · 5211 C 2 020 000"},
             new String[]{"Génération", "Générer une écriture", "Sans frais : la ligne de frais n'apparaît pas"},
@@ -51,7 +52,7 @@ public class GrilleDeDepart implements ApplicationRunner {
             new String[]{"Consultation", "Valider les écritures", "Chaque écriture montre ses lignes, ses comptes et ses totaux débit et crédit"},
             new String[]{"Ergonomie", "Toute l'application", "Les écrans sont compréhensibles sans explication du développeur"},
             new String[]{"Ergonomie", "Toute l'application", "Les messages d'erreur disent quoi corriger"},
-            new String[]{"Ergonomie", "Toute l'application", "Le vocabulaire (opération, événement, rubrique, mapping, recette) correspond au métier"});
+            new String[]{"Ergonomie", "Toute l'application", "Le vocabulaire (opération, événement, rubrique, mapping, règle d'événement) correspond au métier"});
 
     private final RetourRepository retours;
 
@@ -60,8 +61,16 @@ public class GrilleDeDepart implements ApplicationRunner {
     }
 
     @Override
+    @Transactional
     public void run(ApplicationArguments args) {
         if (retours.count() > 0) {
+            // Grille déjà chargée : on remet à jour le texte des points de départ (statut et observation conservés).
+            for (Retour r : retours.findAllByOrderByOrdreAsc()) {
+                if (!r.isAjouteParTesteur() && r.getOrdre() >= 1 && r.getOrdre() <= POINTS.size()) {
+                    String[] p = POINTS.get(r.getOrdre() - 1);
+                    r.reformuler(p[0], p[1], p[2]);
+                }
+            }
             return;
         }
         List<Retour> grille = new ArrayList<>();

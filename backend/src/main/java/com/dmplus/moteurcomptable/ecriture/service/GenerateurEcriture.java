@@ -24,7 +24,7 @@ public final class GenerateurEcriture {
                                               Map<String, BigDecimal> montants,
                                               ResolveurCompte resolveur) {
         if (recette.isEmpty()) {
-            throw new MoteurException("RECETTE_VIDE", "La recette ne contient aucune ligne");
+            throw new MoteurException("RECETTE_VIDE", "La règle d'événement ne contient aucune ligne");
         }
         List<LigneProposee> lignes = new ArrayList<>();
         recette.stream()

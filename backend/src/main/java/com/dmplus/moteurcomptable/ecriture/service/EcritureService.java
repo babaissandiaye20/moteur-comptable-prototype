@@ -88,7 +88,7 @@ public class EcritureService {
                 .findFirstByEvenementCodeAndStatutAndDateEffetLessThanEqualOrderByVersionDesc(
                         evenement.getCode(), StatutRecette.PUBLIEE, e.dateValeur())
                 .orElseThrow(() -> new MoteurException("RECETTE_INTROUVABLE",
-                        "Aucune recette publiée pour " + evenement.getCode() + " au " + e.dateValeur()));
+                        "Aucune règle d'événement publiée pour " + evenement.getCode() + " au " + e.dateValeur()));
 
         // 3. Le moteur pur : recette + montants + mapping → lignes équilibrées.
         List<LigneRecette> lignesRecette = recette.getLignes().stream()

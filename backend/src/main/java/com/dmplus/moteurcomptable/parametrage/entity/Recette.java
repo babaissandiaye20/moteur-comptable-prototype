@@ -77,7 +77,7 @@ public class Recette extends EntiteAuditee {
         boolean credit = lignes.stream().anyMatch(l -> l.getSens() == Sens.C);
         if (!debit || !credit) {
             throw new MoteurException("RECETTE_INCOMPLETE",
-                    "Une recette doit avoir au moins une ligne au débit et une au crédit");
+                    "Une règle d'événement doit avoir au moins une ligne au débit et une au crédit");
         }
         this.statut = StatutRecette.PUBLIEE;
         this.publiePar = utilisateur;
@@ -92,7 +92,7 @@ public class Recette extends EntiteAuditee {
     private void exigerBrouillon() {
         if (statut != StatutRecette.BROUILLON) {
             throw new MoteurException("RECETTE_FIGEE",
-                    "La recette " + evenementCode + " v" + version + " est " + statut + " : créez une nouvelle version");
+                    "La règle " + evenementCode + " v" + version + " est " + statut + " : créez une nouvelle version");
         }
     }
 

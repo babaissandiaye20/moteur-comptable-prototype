@@ -55,6 +55,13 @@ public class Retour extends EntiteAuditee {
         this.observation = observation;
     }
 
+    /** Met à jour le libellé d'un point de départ, sans toucher à l'avis du testeur. */
+    public void reformuler(String fonctionnalite, String ouTester, String critere) {
+        this.fonctionnalite = fonctionnalite;
+        this.ouTester = ouTester;
+        this.critere = critere;
+    }
+
     public Long getId() { return id; }
     public int getOrdre() { return ordre; }
     public String getFonctionnalite() { return fonctionnalite; }

@@ -15,6 +15,7 @@
 </header>
 <main class="doc" style="margin:0 auto">
 <h1>Les tables du moteur comptable</h1>
+<p><b>Vocabulaire.</b> À l’écran, on dit « règle d’événement » (le mot du financier et du recueil ; « schéma d’écriture » dans le guide développeurs). Dans la base, la table s’appelle <code>recette</code>.</p>
 <ul class="sommaire"><li><a href="#colonnes-communes-package-shared">Colonnes communes (package `shared`)</a></li><li><a href="#a-param-trage-package-parametrage">A. Paramétrage (package `parametrage`)</a></li><li><a href="#b-critures-package-ecriture">B. Écritures (package `ecriture`)</a></li></ul>
 <figure><img src="tables.svg" alt="Schéma des 12 tables et de leurs liens"></figure>
 <p>Schéma : <code>tables.png</code> (source <code>tables.puml</code>). 12 tables en deux familles : le <b>paramétrage</b>, que le comptable remplit, et les <b>écritures</b>, que le moteur produit.</p>
@@ -28,7 +29,7 @@
 <tr><td><code>is_deleted</code></td><td>BOOLEAN</td><td>Suppression douce : la ligne reste en base, car des écritures passées peuvent y faire référence, mais elle disparaît des recherches. Refusée tant que l&#x27;élément est utilisé</td></tr>
 </tbody></table>
 <p>Classes : <code>EntiteAuditee</code> (les quatre premières colonnes) et <code>EntiteSupprimable</code> (+ <code>is_deleted</code>).</p>
-<p><b>Les écritures n&#x27;ont pas de <code>is_deleted</code>.</b> Une écriture comptable ne se supprime pas : on la corrige par une écriture inverse. Une recette non plus : on la retire.</p>
+<p><b>Les écritures n&#x27;ont pas de <code>is_deleted</code>.</b> Une écriture comptable ne se supprime pas : on la corrige par une écriture inverse. Une règle d’événement non plus : on la retire.</p>
 <h2 id="a-param-trage-package-parametrage">A. Paramétrage (package <code>parametrage</code>)</h2>
 <h3 id="operation-la-famille-d-action"><code>operation</code> : la famille d&#x27;action</h3>
 <table><thead><tr><th>Colonne</th><th>Type</th><th>Pourquoi</th></tr></thead><tbody>
@@ -51,14 +52,14 @@
 <tr><td><code>operation_code</code></td><td>VARCHAR, FK</td><td><b>Une seule</b> opération par événement (règle du financier). Une seule colonne rend la règle impossible à contourner</td></tr>
 <tr><td><code>journal_code</code></td><td>VARCHAR, FK</td><td>Le journal où vont toutes ses écritures. Défini une fois ici, plutôt qu&#x27;à chaque écriture</td></tr>
 </tbody></table>
-<p>Règles : opération et journal existants et ouverts ; suppression refusée tant qu&#x27;une recette publiée existe.</p>
+<p>Règles : opération et journal existants et ouverts ; suppression refusée tant qu&#x27;une règle d’événement publiée existe.</p>
 <h3 id="rubrique-le-nom-d-une-ligne-d-criture"><code>rubrique</code> : le nom d&#x27;une ligne d&#x27;écriture</h3>
 <table><thead><tr><th>Colonne</th><th>Type</th><th>Pourquoi</th></tr></thead><tbody>
 <tr><td><code>code</code></td><td>VARCHAR, clé</td><td>Ex. <code>R01</code>. Les recettes parlent en rubriques, jamais en numéros de compte</td></tr>
 <tr><td><code>libelle</code></td><td>VARCHAR</td><td>Ex. « Valeur d&#x27;inscription du titre »</td></tr>
 <tr><td><code>nature</code></td><td>ACTIF / CHARGE / PASSIF / PRODUIT</td><td>Dit ce que représente la ligne, et donc de quel côté elle augmente (actif et charge au débit, passif et produit au crédit)</td></tr>
 </tbody></table>
-<p>Règles : nature obligatoire ; suppression refusée si un mapping ou une recette l&#x27;utilise.</p>
+<p>Règles : nature obligatoire ; suppression refusée si un mapping ou une règle d’événement l&#x27;utilise.</p>
 <h3 id="compte-une-page-du-grand-livre"><code>compte</code> : une page du grand livre</h3>
 <table><thead><tr><th>Colonne</th><th>Type</th><th>Pourquoi</th></tr></thead><tbody>
 <tr><td><code>code</code></td><td>VARCHAR, clé</td><td>Le numéro du plan de comptes de la compagnie. Ex. <code>2745</code></td></tr>
@@ -74,12 +75,12 @@
 <tr><td><code>categorie</code></td><td>VARCHAR</td><td>Ex. <code>ETAT</code>, <code>SOCIETE</code>. <code>*</code> = toutes. Un titre d&#x27;État et un titre de société vont dans des comptes différents</td></tr>
 <tr><td><code>compte_code</code></td><td>VARCHAR, FK</td><td>Le compte trouvé</td></tr>
 </tbody></table>
-<p>Règles : rubrique existante, compte existant et ouvert, une seule ligne par combinaison. La ligne la plus précise gagne (classe exacte +2, catégorie exacte +1). <b>Grâce au mapping, une seule recette sert à toutes les compagnies</b> : seul le répertoire change.</p>
+<p>Règles : rubrique existante, compte existant et ouvert, une seule ligne par combinaison. La ligne la plus précise gagne (classe exacte +2, catégorie exacte +1). <b>Grâce au mapping, une seule règle d’événement sert à toutes les compagnies</b> : seul le répertoire change.</p>
 <h3 id="recette-la-d-finition-d-un-v-nement-versionn-e"><code>recette</code> : la définition d&#x27;un événement, versionnée</h3>
 <table><thead><tr><th>Colonne</th><th>Type</th><th>Pourquoi</th></tr></thead><tbody>
 <tr><td><code>id</code></td><td>BIGINT, clé</td><td>Identifiant d&#x27;une version précise</td></tr>
 <tr><td><code>evenement_code</code></td><td>VARCHAR, FK</td><td>L&#x27;événement décrit</td></tr>
-<tr><td><code>version</code></td><td>INT</td><td>1, 2, 3… Changer une recette crée une version, sans toucher aux écritures passées</td></tr>
+<tr><td><code>version</code></td><td>INT</td><td>1, 2, 3… Changer une règle d’événement crée une version, sans toucher aux écritures passées</td></tr>
 <tr><td><code>statut</code></td><td>BROUILLON / PUBLIEE / RETIREE</td><td>Seule une version publiée sert. Publiée = figée</td></tr>
 <tr><td><code>date_effet</code></td><td>DATE</td><td>À partir de quand la version s&#x27;applique</td></tr>
 <tr><td><code>publie_par</code>, <code>publie_le</code></td><td>VARCHAR, TIMESTAMP</td><td>Qui a publié, et quand : la décision métier, en plus de la traçabilité technique</td></tr>
@@ -111,11 +112,11 @@
 <tr><td><code>id</code></td><td>BIGINT, clé</td><td>Identifiant technique</td></tr>
 <tr><td><code>evenement_recu_id</code></td><td>BIGINT, FK</td><td>Remonter à l&#x27;événement d&#x27;origine</td></tr>
 <tr><td><code>evenement_code</code></td><td>VARCHAR</td><td>Lire l&#x27;écriture sans jointure</td></tr>
-<tr><td><code>recette_id</code>, <code>recette_version</code></td><td>BIGINT, INT</td><td><b>La version de recette utilisée</b>, figée : une recette changée plus tard ne touche pas cette écriture</td></tr>
+<tr><td><code>recette_id</code>, <code>recette_version</code></td><td>BIGINT, INT</td><td><b>La version de règle utilisée</b>, figée : une règle d’événement changée plus tard ne touche pas cette écriture</td></tr>
 <tr><td><code>journal_code</code></td><td>VARCHAR</td><td>Le journal, repris de l&#x27;événement</td></tr>
 <tr><td><code>exercice</code></td><td>INT</td><td>L&#x27;année comptable. La numérotation repart à 1 chaque exercice</td></tr>
 <tr><td><code>numero</code></td><td>VARCHAR</td><td>Ex. <code>PLA-2026-0001</code>. Attribué à la validation, sans trou. Vide tant que l&#x27;écriture est proposée</td></tr>
-<tr><td><code>date_valeur</code></td><td>DATE</td><td>La date de l&#x27;opération, qui choisit la version de recette en vigueur</td></tr>
+<tr><td><code>date_valeur</code></td><td>DATE</td><td>La date de l&#x27;opération, qui choisit la version de règle en vigueur</td></tr>
 <tr><td><code>date_reglement</code></td><td>DATE</td><td>La date du paiement, qui peut être différente</td></tr>
 <tr><td><code>libelle</code></td><td>VARCHAR</td><td>Le texte de l&#x27;écriture</td></tr>
 <tr><td><code>statut</code></td><td>PROPOSEE / VALIDEE / ANNULEE</td><td>Validée = figée</td></tr>
@@ -127,7 +128,7 @@
 <tr><td><code>id</code></td><td>BIGINT, clé</td><td>Identifiant technique</td></tr>
 <tr><td><code>ecriture_id</code></td><td>BIGINT, FK</td><td>L&#x27;écriture parente</td></tr>
 <tr><td><code>ordre</code></td><td>INT</td><td>L&#x27;ordre d&#x27;affichage</td></tr>
-<tr><td><code>rubrique_code</code></td><td>VARCHAR</td><td>La rubrique de la recette</td></tr>
+<tr><td><code>rubrique_code</code></td><td>VARCHAR</td><td>La rubrique de la règle d’événement</td></tr>
 <tr><td><code>compte_code</code></td><td>VARCHAR</td><td><b>Recopié</b> au moment de la génération : un mapping changé demain ne modifie pas l&#x27;écriture d&#x27;hier</td></tr>
 <tr><td><code>sens</code></td><td>D / C</td><td>Débit ou crédit</td></tr>
 <tr><td><code>montant</code></td><td>NUMERIC(20,2)</td><td>Décimal exact. Jamais de nombre à virgule flottante pour de l&#x27;argent</td></tr>
